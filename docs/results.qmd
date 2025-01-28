@@ -142,9 +142,9 @@ where
 This assumes that the increase is linear.
 
 ## Uncertainty 
-In each of 1,000 replicatess, re-sample **rd_baseline_pt** and **rd_per_ac_iqr_pt** from a normal distribution using the reported standard deviation and 95% CI (assuming confidence limit is 1.95*SD).
+In each of 1,000 replicatess, re-sample **rd_baseline_pt** and **rd_per_ac_iqr_pt** from a normal distribution using the reported standard deviation and 95% CI (assuming confidence limit is estimate +/- 1.96*SD).
 
-In each replicate, re-calculate **rd_target_pt** using these re-sampled values.
+Then, in each replicate, propagate this uncertainty by re-calculating **rd_target_pt** using the re-sampled input values.
 
 The resulting uncertainty interval is 2.5th and 97.5th percentiles.
 
@@ -154,7 +154,7 @@ The resulting uncertainty interval is 2.5th and 97.5th percentiles.
 
 There are 1,396 total zip codes
 
-n_zcta_intervene is the number of zip codes whose AC values would be changed under the scenario.
+**n_zcta_intervene** is the number of zip codes whose AC values would be changed under the scenario.
 
 Risk differences are expressed per 100,000.
 
@@ -191,6 +191,7 @@ all_scenarios_summary_pt %>%
 
 
 ## Maps of results for each scenario
+Values mapped are the risk difference per 100k for the corresponding scenario among those zip-codes that were intervened upon in that scenario.
 
 ### Target percentile: 0.5
 ```{r}
