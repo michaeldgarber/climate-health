@@ -33,7 +33,7 @@ Effect modification of this effect by community characteristics has been estimat
 The increase in risk difference per IQR increase in air conditioning prevalence is -0.239302618 (95% CI, -0.41143431, -0.0671709235), the corresponding IQR for AC prevalence is 6.000915e-01.
 
 Over-arching question: 
-How would hypothetically changing the distribution of the effect modifiers affect the number and distribution of respiratory acute-care utilization?
+How would hypothetically changing the distribution of the effect modifiers affect the total burden and spatial distribution of respiratory acute-care utilization?
 
 ## Baseline risk difference (zcta-level)
 ### Histogram and summary statistics
@@ -132,6 +132,7 @@ Then, use that value to calculate the new risk difference under that scenario, f
 rd_target_pt=rd_baseline_pt+rd_per_ac_iqr_pt*ac_prop_change_per_iqr
 
 where
+
 * rd_target_pt = the zip code's new risk difference under the scenario
 
 * rd_per_ac_iqr_pt = the increase in the risk difference per change in IQR of AC
@@ -141,7 +142,11 @@ where
 This assumes that the increase is linear.
 
 ## Uncertainty 
-Calculate uncertainty by re-sampling *rd_baseline_pt* and *rd_per_ac_iqr_pt* from a normal distribution with 1,000 bootstrap replications. Uncertainty interval is 2.5th and 97.5th percentiles.
+In each of 1,000 replicatess, re-sample **rd_baseline_pt** and **rd_per_ac_iqr_pt** from a normal distribution using the reported standard deviation and 95% CI (assuming confidence limit is 1.95*SD).
+
+In each replicate, re-calculate **rd_target_pt** using these re-sampled values.
+
+The resulting uncertainty interval is 2.5th and 97.5th percentiles.
 
 
 # Results
