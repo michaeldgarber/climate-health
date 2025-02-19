@@ -240,7 +240,7 @@ all_scenarios_summary_pt %>%
 
 ## How distribution changes by scenario
 
-### Distribution of target risk difference by scenario (histograms)
+### Distribution of target risk difference by scenario (histogram panel)
 Note this only includes every other scenario to facilitate clearer visualization
 ```{r}
 #| echo: false
@@ -265,8 +265,8 @@ wf_ac_scenarios_all_pt %>%
 ```
 
 
-### Distribution of difference in risk differences
-Comparing the target scenario with baseline
+### Distribution of difference in risk differences (histogram panel)
+Comparing the target scenario with baseline.
 Note this only includes every other scenario to facilitate clearer visualization
 ```{r}
 #| echo: false
@@ -283,9 +283,35 @@ wf_ac_scenarios_all_pt %>%
   theme_bw(base_size = 16)+
     labs(
     y="Number of ZCTAs",
-    x="Difference in risk difference\nper 100,000",#line break
+    #using \n for line break
+    x="Difference in risk differences\nper 100,000\n(Target-Baseline)",
     fill="ZCTA intervened upon")
 ```
+
+### Distribution of difference in risk differences (boxplot panel)
+Diamond points are the mean over ZCTAs. Horizontal line is the median. Top and bottom of box are 25th and 75th percentiles.
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_ac_scenarios_all_pt %>%
+  mutate(target_percentile_char=as.character(target_percentile)) %>% 
+#  filter(zcta_intervene==1) %>% 
+  filter(target_percentile_decile==1) %>% 
+  ggplot(aes(x= target_percentile_char, y = rd_diff_pt))+
+  geom_boxplot(
+    outlier.size =  .01,
+    outlier.colour = "gray",
+    varwidth=TRUE,
+  )+
+  stat_summary(fun=mean, geom="point", shape=23, size=2)+
+  theme_bw(base_size=14)+
+  labs(
+    x="Target percentile",
+    y="Difference in risk differences\nper 100,000\n(Target-Baseline)"
+  )
+```
+
 
 
 ## Maps of results for selected scenarios
@@ -293,7 +319,7 @@ Values mapped are the risk difference per 100k for the corresponding scenario am
 
 A total of 20 scenarios are available. Choose two, 0.75 and 1.
 
-Note to self: keep color scales constant between maps
+Note to self: keep color scales constant between maps to facilitate comparison.
 
 ### Target percentile: 0.75
 ```{r}
@@ -318,17 +344,20 @@ all_scenarios_summary_by_zcta_pt_scenario_75=all_scenarios_summary_by_zcta_pt %>
 
 qtm_rd_sc_75= zcta_ca_geo_simplified %>% 
   left_join(all_scenarios_summary_by_zcta_pt_scenario_75, by = "zcta") %>% 
-  qtm(fill = "rd_diff_sum",
-      #Change legend. This took some doing to get right.
-      #Use X.legend where X corresponds to the layer being
-      #visualized, fill here
-      #See https://r-tmap.github.io/tmap/reference/qtm.html
-      fill.legend= tm_legend("Difference in risk difference (per 100k)"),
-      
-      #This is how to change the colors. select a viridis scale
-      #https://r-tmap.github.io/tmap/articles/adv_shiny
-      #within matplotlib
-      fill.scale=tm_scale(values="matplotlib.plasma")
+  qtm(
+    #choose just 1 basemap to decrease file size
+    basemaps = "CartoDB.Positron",
+    fill = "rd_diff_sum",
+    #Change legend. This took some doing to get right.
+    #Use X.legend where X corresponds to the layer being
+    #visualized, fill here
+    #See https://r-tmap.github.io/tmap/reference/qtm.html
+    fill.legend= tm_legend("Difference in risk difference (per 100k)"),
+    
+    #This is how to change the colors. select a viridis scale
+    #https://r-tmap.github.io/tmap/articles/adv_shiny
+    #within matplotlib
+    fill.scale=tm_scale(values="matplotlib.plasma")
 )
 
 qtm_rd_sc_75
@@ -356,9 +385,11 @@ all_scenarios_summary_by_zcta_pt_scenario_100=all_scenarios_summary_by_zcta_pt %
 
 qtm_rd_sc_100= zcta_ca_geo_simplified %>% 
   left_join(all_scenarios_summary_by_zcta_pt_scenario_100, by = "zcta") %>% 
-  qtm(fill = "rd_diff_sum",
-fill.legend= tm_legend("Difference in risk difference (per 100k)"),
-      fill.scale=tm_scale(values="matplotlib.plasma")
+  qtm(
+    basemaps = "CartoDB.Positron",
+    fill = "rd_diff_sum",
+    fill.legend= tm_legend("Difference in risk difference (per 100k)"),
+    fill.scale=tm_scale(values="matplotlib.plasma")
 )
 
 qtm_rd_sc_100
