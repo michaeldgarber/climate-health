@@ -181,7 +181,7 @@ This assumes that the increase is linear.
 It also assumes no confounding.
 
 ## Scenario definitions:
-Considering 20 scenarios (0th, 5th,....95th, 100th)
+Considering 20 scenarios for 20 possible target percentile values (0th, 5th,....95th, 100th)
 
 ## Uncertainty 
 In each of 1,000 replicatess, re-sample **rd_baseline_pt** and **rd_per_ac_iqr_pt** from a normal distribution using the reported standard deviation and 95% CI (assuming confidence limit is estimate +/- 1.96*SD).
@@ -239,8 +239,9 @@ all_scenarios_summary_pt %>%
 
 
 ## How distribution changes by scenario
-Consider a panel of histograms here
 
+### Distribution of target risk difference by scenario (histograms)
+Note this only includes every other scenario to facilitate clearer visualization
 ```{r}
 #| echo: false
 #| warning: false
@@ -256,10 +257,36 @@ wf_ac_scenarios_all_pt %>%
   ggplot(aes(x=rd_target_pt, fill = zcta_intervene_char_yn))+
   geom_histogram(binwidth = .1)+
   facet_grid(rows=vars(target_percentile))+
-  theme_bw()+
-  labs(fill="ZCTA intervened upon")
-
+  theme_bw(base_size = 16)+
+  labs(
+    y="Number of ZCTAs",
+    x="Target risk difference per 100,000",
+    fill="ZCTA intervened upon")
 ```
+
+
+### Distribution of difference in risk differences
+Comparing the target scenario with baseline
+Note this only includes every other scenario to facilitate clearer visualization
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-height: 10 #make taller so easier to see
+wf_ac_scenarios_all_pt %>% 
+  filter(target_percentile_decile==1) %>% 
+  ggplot(aes(x=rd_diff_pt, fill = zcta_intervene_char_yn))+
+  #make bins shorter to make the visualization clearer
+  #.2 is too coarse;
+  geom_histogram(binwidth=.05)+
+  facet_grid(rows=vars(target_percentile))+
+  theme_bw(base_size = 16)+
+    labs(
+    y="Number of ZCTAs",
+    x="Difference in risk difference\nper 100,000",#line break
+    fill="ZCTA intervened upon")
+```
+
 
 ## Maps of results for selected scenarios
 Values mapped are the risk difference per 100k for the corresponding scenario among those zip-codes that were intervened upon in that scenario.
