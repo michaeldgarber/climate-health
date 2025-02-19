@@ -1,0 +1,340 @@
+---
+title: "results"
+author: "Michael D Garber"
+date: "`r Sys.Date()`"
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+---
+
+Analogous here
+Using rmarkdown because quarto and tmap are not working well together at the moment
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+library(here)
+library(mapview) #make sure mapview is github version
+library(tmap)
+library(leafgl)
+library(tidyverse)
+library(viridis)
+library(viridisLite)
+library(leaflet)
+library(leaflet.extras)
+library(tmap)
+library(knitr)
+library(RColorBrewer)
+source(here("scripts","read-wrangle-eff-estimates.R"))#load measures
+```
+
+# Introduction
+Effects of wildfire smoke on daily respiratory acute-care utilization has been estimated at the zip-code level in California (Do et al).
+
+Rate differences per 100,000 are estimated at the zip code level.
+
+Effect modification of this effect by community characteristics has been estimated.
+
+The increase in risk difference per IQR increase in air conditioning prevalence is -0.239302618 (95% CI, -0.41143431, -0.0671709235), the corresponding IQR for AC prevalence is 6.000915e-01.
+
+Over-arching question: 
+How would hypothetically changing the distribution of the effect modifiers affect the total burden and spatial distribution of respiratory acute-care utilization?
+
+## Baseline risk difference (zcta-level)
+### Histogram and summary statistics
+RD is per 100,000
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+setwd(here("data-processed"))
+load("wf_ac_zcta_wrangle.RData")
+summary(wf_ac_zcta_wrangle$rd_baseline_pt)
+wf_ac_zcta_wrangle %>% 
+  ggplot(aes(x=rd_baseline_pt))+
+  geom_histogram()+
+  theme_bw()+
+  xlab("Risk difference per 100,000 (baseline)")
+```
+
+
+### Map
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+setwd(here("data-processed"))
+load("zcta_ca_geo_simplified.RData")
+
+ac_zcta_among_wf=wf_ac_zcta %>% 
+  dplyr::select(zcta,ac_prop)
+tmap_mode("view") 
+qtm_rd_baseline= zcta_ca_geo_simplified %>% 
+  left_join(wf_ac_zcta_wrangle, by = "zcta") %>% 
+  dplyr::select(
+    contains("zcta"),
+    contains("pop"),
+    contains("rd_baseline"),
+    contains("ac_prop")
+    ) %>% 
+  filter(is.na(rd_baseline_pt)==F) %>% 
+  qtm(
+    #choose just 1 basemap to decrease file size
+    basemaps = "CartoDB.Positron",
+    
+    fill = "rd_baseline_pt",
+    title = "Risk difference (baseline)",
+      #Change legend. This took some doing to get right.
+      #Use X.legend where X corresponds to the layer being
+      #visualized, fill here
+      #See https://r-tmap.github.io/tmap/reference/qtm.html
+      fill.legend= tm_legend("Risk Difference (per 100k)")
+)+
+  tm_view()
+
+qtm_rd_baseline
+```
+
+## Air conditioning (zcta-level)
+Distribution of air conditioning at the zip-code level
+
+### Histogram and summary statistics
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+summary(wf_ac_zcta$ac_prop)
+wf_ac_zcta %>% 
+  ggplot(aes(x=ac_prop))+
+  geom_histogram()+
+  theme_bw()+
+  xlab("Proportion of residents with AC")+
+  ylab("Number of ZCTAs")
+```
+
+### Map
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("zcta_ca_geo_simplified.RData")
+
+ac_zcta_among_wf=wf_ac_zcta %>% 
+  dplyr::select(zcta,ac_prop)
+tmap_mode("view") 
+qtm_ac= zcta_ca_geo_simplified %>% 
+  left_join(ac_zcta_among_wf, by = "zcta") %>% 
+    qtm(
+      fill = "ac_prop",
+      title = "Proportion with A/C",
+      fill.legend= tm_legend("Proportion with A/C"),
+      
+      #choose just 1 basemap to decrease file size
+      basemaps = "CartoDB.Positron"
+)
+
+qtm_ac %>% 
+  leaflet.extras::addFullscreenControl()
+```
+
+# Methods
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+ac_iqr_among_wf_eff %>% 
+  kable()
+```
+
+
+
+## HIA method
+For each zip code, calculate the change in the AC proportion from the status quo to the target percentile level. For example, if a zip code has a 50% AC prevalence, the difference from baseline to target in Scenario 1 is 12.5% (62.5%-50%).
+
+Then, express that difference in terms of the number of IQRs that it represents. The IQR of AC is 0.61 (above).
+That zip code would raise its AC prevalence by
+```{r}
+0.125/.61
+```
+
+Then, use that value to calculate the new risk difference under that scenario, following this equation:
+
+rd_target_pt=rd_baseline_pt+rd_per_ac_iqr_pt*ac_prop_change_per_iqr
+
+where
+
+* rd_target_pt = the zip code's new risk difference under the scenario
+
+* rd_per_ac_iqr_pt = the increase in the risk difference per change in IQR of AC
+
+* ac_prop_change_per_iqr = the number of IQRs changed in that zip code in that scenario
+
+This assumes that the increase is linear.
+It also assumes no confounding.
+
+## Scenario definitions:
+Considering 20 scenarios (0th, 5th,....95th, 100th)
+
+## Uncertainty 
+In each of 1,000 replicatess, re-sample **rd_baseline_pt** and **rd_per_ac_iqr_pt** from a normal distribution using the reported standard deviation and 95% CI (assuming confidence limit is estimate +/- 1.96*SD).
+
+Then, in each replicate, propagate this uncertainty by re-calculating **rd_target_pt** using the re-sampled input values.
+
+The resulting uncertainty interval is the 2.5th and 97.5th percentiles.
+
+
+# Results
+## Overall summary table
+
+There are **1,396** total zip codes
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("all_scenarios_summary_pt.RData")
+load("all_scenarios_summary_boot.RData")
+#Comment: the confidence intervals seem backwards.
+all_scenarios_summary_pt %>% 
+  dplyr::select(
+    target_percentile,
+    n_zcta_intervene,
+    rd_baseline_sum,
+    rd_target_sum,
+    rd_diff_sum
+  ) %>% 
+  left_join(all_scenarios_summary_boot,by="target_percentile") %>% 
+  dplyr::select(
+    contains("target_percentile"),
+        n_zcta_intervene,
+    contains("rd_baseline_sum"),
+    contains("rd_target_sum"), 
+    contains("rd_diff_sum")
+  ) %>% 
+  knitr::kable(
+    col.names = c(
+      "Target percentile","N, ZCTAS intervened",
+      "RD per 100k, baseline (sum over ZCTAs)",
+      "RD per 100k, baseline (sum over ZCTAs) (LL)",
+      "RD per 100k, baseline (sum over ZCTAs) (UL)",
+      "RD per 100k, target (sum over ZCTAs)",
+      "RD per 100k, target (sum over ZCTAs) (LL)",
+      "RD per 100k, target (sum over ZCTAs) (UL)",
+      "RD per 100k, difference (sum over ZCTAs)",
+      "RD per 100k, difference (sum over ZCTAs) (LL)",
+      "RD per 100k, difference (sum over ZCTAs) (UL)"
+      ),
+    digits=2)
+    
+```
+
+
+## How distribution changes by scenario
+Consider a panel of histograms here
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-height: 10 #make taller so easier to see
+
+setwd(here("data-processed"))
+load("wf_ac_scenarios_all_pt.RData")
+
+wf_ac_scenarios_all_pt %>% 
+  #to slim down the number of charts
+  filter(target_percentile_decile==1) %>% 
+  ggplot(aes(x=rd_target_pt, fill = zcta_intervene_char_yn))+
+  geom_histogram(binwidth = .1)+
+  facet_grid(rows=vars(target_percentile))+
+  theme_bw()+
+  labs(fill="ZCTA intervened upon")
+
+```
+
+## Maps of results for selected scenarios
+Values mapped are the risk difference per 100k for the corresponding scenario among those zip-codes that were intervened upon in that scenario.
+
+A total of 20 scenarios are available. Choose two, 0.75 and 1.
+
+Note to self: keep color scales constant between maps
+
+### Target percentile: 0.75
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("all_scenarios_summary_by_zcta_pt.RData")
+
+tmap_mode("view") 
+
+all_scenarios_summary_by_zcta_pt_scenario_75=all_scenarios_summary_by_zcta_pt %>% 
+  filter(target_percentile==0.75) %>% 
+  #and only pick those to print
+  dplyr::select(zcta,
+                n_zcta_intervene,
+                rd_baseline_sum,
+                rd_target_sum,
+                rd_diff_sum
+                )
+
+
+qtm_rd_sc_75= zcta_ca_geo_simplified %>% 
+  left_join(all_scenarios_summary_by_zcta_pt_scenario_75, by = "zcta") %>% 
+  qtm(fill = "rd_diff_sum",
+      #Change legend. This took some doing to get right.
+      #Use X.legend where X corresponds to the layer being
+      #visualized, fill here
+      #See https://r-tmap.github.io/tmap/reference/qtm.html
+      fill.legend= tm_legend("Difference in risk difference (per 100k)"),
+      
+      #This is how to change the colors. select a viridis scale
+      #https://r-tmap.github.io/tmap/articles/adv_shiny
+      #within matplotlib
+      fill.scale=tm_scale(values="matplotlib.plasma")
+)
+
+qtm_rd_sc_75
+```
+
+
+### Target percentile: 1
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("all_scenarios_summary_by_zcta_pt.RData")
+
+all_scenarios_summary_by_zcta_pt_scenario_100=all_scenarios_summary_by_zcta_pt %>% 
+  filter(target_percentile==1) %>% 
+  #and only pick those to print
+  dplyr::select(zcta,
+                n_zcta_intervene,
+                rd_baseline_sum,
+                rd_target_sum,
+                rd_diff_sum
+                )
+
+
+qtm_rd_sc_100= zcta_ca_geo_simplified %>% 
+  left_join(all_scenarios_summary_by_zcta_pt_scenario_100, by = "zcta") %>% 
+  qtm(fill = "rd_diff_sum",
+fill.legend= tm_legend("Difference in risk difference (per 100k)"),
+      fill.scale=tm_scale(values="matplotlib.plasma")
+)
+
+qtm_rd_sc_100
+```
+
+
