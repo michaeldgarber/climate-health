@@ -192,8 +192,9 @@ The resulting uncertainty interval is the 2.5th and 97.5th percentiles.
 
 
 # Results
-## Overall summary table
+## Overall summary
 
+### Table
 There are **1,396** total zip codes
 
 ```{r}
@@ -235,6 +236,22 @@ all_scenarios_summary_pt %>%
       ),
     digits=2)
     
+```
+
+### Plot of difference in risk difference by scenario 
+A plot of the "difference in risk differences" column in the above table
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+all_scenarios_summary_pt %>% 
+  ggplot(aes(x=target_percentile,y=rd_diff_sum))+
+  geom_point()+
+  labs(
+    x="Target percentile",
+    y="Difference in risk differences\n(per 100,000)\n(target scenario-baseline)"
+  )+
+  theme_bw()
 ```
 
 
@@ -340,9 +357,49 @@ wf_ac_scenarios_all_pt %>%
   )
 ```
 
+## Facet map
+Show how the distribution changes spatially over the scenarios
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-height: 10 #make taller so easier to see
+setwd(here("data-processed"))
+load("zcta_ca_geo_simplified.RData")
+load("lookup_target_percentile_decile.RData")
+load("all_scenarios_summary_by_zcta_pt.RData")
+tmap_mode("plot") 
+#This creates a faceted map. Also see this chapter by Lovelace
+#https://r.geocompx.org/adv-map#faceted-maps
+#Note I'm using the conventional tmap syntax here rather than qtm,
+#which stands for quick thematic map.
+zcta_ca_geo_simplified %>% 
+  left_join(all_scenarios_summary_by_zcta_pt,by="zcta") %>% 
+  left_join(lookup_target_percentile_decile,
+            by="target_percentile") %>% 
+  filter(target_percentile_decile==1) %>% 
+  tm_shape()+
+  #for specifying the color scale
+  #https://r-tmap.github.io/tmap/articles/basics_scales
+  tm_polygons(
+    fill="rd_diff_sum",
+    #c is Plasma
+    palette=viridis(n=4, option="C"),#consistent with above
+    title="Difference in risk differences\nper 100,000\n(Target-Baseline)",
+    lwd=0.1)+
+  tm_facets(by="target_percentile" 
+            #nrow=10, 
+            #scale.factor = 1
+            )+
+  #add a basemap at the end of the code like this:
+  #https://r-tmap.github.io/tmap/reference/tm_basemap.html
+  tm_basemap("CartoDB.PositronNoLabels") 
 
 
-## Maps of results for selected scenarios
+```
+
+
+## Maps (interactive) of results for selected scenarios
 Values mapped are the risk difference per 100k for the corresponding scenario among those zip-codes that were intervened upon in that scenario.
 
 A total of 20 scenarios are available. Choose two, 0.75 and 1.
@@ -359,7 +416,6 @@ Another idea: a facet of static maps
 setwd(here("data-processed"))
 load("all_scenarios_summary_by_zcta_pt.RData")
 
-tmap_mode("view") 
 
 all_scenarios_summary_by_zcta_pt_scenario_75=all_scenarios_summary_by_zcta_pt %>% 
   filter(target_percentile==0.75) %>% 
@@ -371,24 +427,34 @@ all_scenarios_summary_by_zcta_pt_scenario_75=all_scenarios_summary_by_zcta_pt %>
                 rd_diff_sum
                 )
 
+tmap_mode("view") 
+tm_75_obj= zcta_ca_geo_simplified %>% 
+  left_join(all_scenarios_summary_by_zcta_pt_scenario_75, by = "zcta") 
 
-qtm_rd_sc_75= zcta_ca_geo_simplified %>% 
-  left_join(all_scenarios_summary_by_zcta_pt_scenario_75, by = "zcta") %>% 
-  qtm(
-    #choose just 1 basemap to decrease file size
-    basemaps = "CartoDB.Positron",
+qtm_rd_sc_75=tm_basemap("CartoDB.Positron")+
+  tm_shape(tm_75_obj)+
+  tm_polygons(
     fill = "rd_diff_sum",
+    lwd=0.5,
     #Change legend. This took some doing to get right.
     #Use X.legend where X corresponds to the layer being
     #visualized, fill here
     #See https://r-tmap.github.io/tmap/reference/qtm.html
-    fill.legend= tm_legend("Difference in risk difference (per 100k)"),
+    fill.legend= tm_legend("Difference in risk differences (per 100k)"),
     
     #This is how to change the colors. select a viridis scale
     #https://r-tmap.github.io/tmap/articles/adv_shiny
     #within matplotlib
-    fill.scale=tm_scale(values="matplotlib.plasma")
-)
+    fill.scale=tm_scale_intervals(
+            #keep number of categories fewer. see
+      #https://r-tmap.github.io/tmap/articles/basics_scales
+
+      style="pretty",
+      breaks = c(-.4,-.3,-.2,-.1,0), # you need n+1 number of breaks
+            n=4,#8 categories
+      values="matplotlib.plasma")
+)  
+
 
 qtm_rd_sc_75
 ```
@@ -412,16 +478,21 @@ all_scenarios_summary_by_zcta_pt_scenario_100=all_scenarios_summary_by_zcta_pt %
                 rd_diff_sum
                 )
 
+tm_100_obj= zcta_ca_geo_simplified %>% 
+  left_join(all_scenarios_summary_by_zcta_pt_scenario_100, by = "zcta") 
 
-qtm_rd_sc_100= zcta_ca_geo_simplified %>% 
-  left_join(all_scenarios_summary_by_zcta_pt_scenario_100, by = "zcta") %>% 
-  qtm(
-    basemaps = "CartoDB.Positron",
+qtm_rd_sc_100=tm_basemap("CartoDB.Positron")+
+  tm_shape(tm_100_obj)+
+  tm_polygons(
+        lwd=0.5,
     fill = "rd_diff_sum",
-    fill.legend= tm_legend("Difference in risk difference (per 100k)"),
-    fill.scale=tm_scale(values="matplotlib.plasma")
-)
-
+    fill.legend= tm_legend("Difference in risk differences (per 100k)"),
+    fill.scale=tm_scale_intervals(
+      style="pretty",
+      breaks = c(-.4,-.3,-.2,-.1,0), # you need n+1 number of breaks
+            n=4,#8 categories
+      values="matplotlib.plasma")
+    ) 
 qtm_rd_sc_100
 ```
 
