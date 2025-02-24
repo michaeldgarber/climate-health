@@ -1,5 +1,5 @@
 ---
-title: "results"
+title: "Results: Modification of effect of wildfire on acute-care utilization by air-conditioning at the zip-code level"
 author: "Michael D Garber"
 date: "`r Sys.Date()`"
 output:
@@ -9,8 +9,12 @@ output:
     toc_depth: 4
 ---
 
-Analogous here
-Using rmarkdown because quarto and tmap are not working well together at the moment
+# Technical notes
+Using rmarkdown because quarto and tmap are not working well together at the moment.
+
+URL of this page: https://michaeldgarber.github.io/climate-health/results-markdown.html
+
+URL of in-progress related Shiny app: https://michaeldgarber.shinyapps.io/climate-health-shiny/
 
 ```{r}
 #| echo: false
@@ -405,8 +409,6 @@ Values mapped are the risk difference per 100k for the corresponding scenario am
 A total of 20 scenarios are available. Choose two, 0.75 and 1.
 
 Note to self: keep color scales constant between maps to facilitate comparison.
-
-Another idea: a facet of static maps
 
 ### Target percentile: 0.75
 ```{r}
