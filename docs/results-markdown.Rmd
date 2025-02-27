@@ -66,7 +66,7 @@ wf_ac_zcta_wrangle %>%
 ```
 
 
-### Map
+### Map of baseline risk difference
 ```{r}
 #| echo: false
 #| warning: false
@@ -90,7 +90,7 @@ qtm_rd_baseline= zcta_ca_geo_simplified %>%
   qtm(
     #choose just 1 basemap to decrease file size
     basemaps = "CartoDB.Positron",
-    
+        lwd=.5,
     fill = "rd_baseline_pt",
     title = "Risk difference (baseline)",
       #Change legend. This took some doing to get right.
@@ -104,6 +104,43 @@ qtm_rd_baseline= zcta_ca_geo_simplified %>%
 qtm_rd_baseline
 ```
 
+
+### Map of standard error of risk difference
+Note that standard errors appear lower in metropolitan areas, such as the San Francisco Bay Area, Los Angeles, and San Diego.
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+setwd(here("data-processed"))
+load("zcta_ca_geo_simplified.RData")
+
+ac_zcta_among_wf=wf_ac_zcta %>% 
+  dplyr::select(zcta,ac_prop)
+tmap_mode("view") 
+qtm_rd_sd_baseline= zcta_ca_geo_simplified %>% 
+  left_join(wf_ac_zcta_wrangle, by = "zcta") %>% 
+  dplyr::select(
+    contains("zcta"),
+    contains("pop"),
+    contains("rd_baseline"),
+    contains("ac_prop")
+    ) %>% 
+  filter(is.na(rd_baseline_pt)==F) %>% 
+  qtm(
+    #choose just 1 basemap to decrease file size
+    basemaps = "CartoDB.Positron",
+    lwd=.5,
+    
+    fill = "rd_baseline_sd",
+    title = "Standard error in risk difference (baseline)",
+      #See https://r-tmap.github.io/tmap/reference/qtm.html
+      fill.legend= tm_legend("Standard error in risk difference (per 100k)")
+)+
+  tm_view()
+
+qtm_rd_sd_baseline
+```
 ## Air conditioning (zcta-level)
 Distribution of air conditioning at the zip-code level
 
@@ -121,7 +158,7 @@ wf_ac_zcta %>%
   ylab("Number of ZCTAs")
 ```
 
-### Map
+### Map of air conditioning
 ```{r}
 #| echo: false
 #| warning: false
@@ -188,9 +225,9 @@ It also assumes no confounding.
 Considering 20 scenarios for 20 possible target percentile values (0th, 5th,....95th, 100th)
 
 ## Uncertainty 
-In each of 1,000 replicatess, re-sample **rd_baseline_pt** and **rd_per_ac_iqr_pt** from a normal distribution using the reported standard deviation and 95% CI (assuming confidence limit is estimate +/- 1.96*SD).
+In each of 1,000 replicatess, re-sample **rd_baseline_pt** and **rd_per_ac_iqr_pt** from a normal distribution using the reported standard deviation and 95% CI. Assume the confidence limit is the estimate +/- 1.96*SD.
 
-Then, in each replicate, propagate this uncertainty by re-calculating **rd_target_pt** using the re-sampled input values.
+Then, in each replicate, propagate this uncertainty throughout the calculations by re-calculating **rd_target_pt** using the re-sampled input values.
 
 The resulting uncertainty interval is the 2.5th and 97.5th percentiles.
 
@@ -243,14 +280,35 @@ all_scenarios_summary_pt %>%
 ```
 
 ### Plot of difference in risk difference by scenario 
-A plot of the "difference in risk differences" column in the above table
+A plot of the "difference in risk differences" column in the above table.
+The vertical error bars denote the 95% uncertainty interval.
 ```{r}
+#comment: add uncertainty intervals to this
 #| echo: false
 #| warning: false
 #| message: false
-all_scenarios_summary_pt %>% 
+setwd(here("data-processed"))
+load("all_scenarios_summary_pt.RData")
+load("all_scenarios_summary_boot.RData") 
+
+all_scenarios_summary_pt  %>%
+  left_join(all_scenarios_summary_boot,by="target_percentile") %>% 
+  dplyr::select(
+    contains("target_percentile"),
+        n_zcta_intervene,
+    contains("rd_baseline_sum"),
+    contains("rd_target_sum"), 
+    contains("rd_diff_sum")
+  ) %>% 
   ggplot(aes(x=target_percentile,y=rd_diff_sum))+
   geom_point()+
+  geom_pointrange(
+        aes(
+        ymin=rd_diff_sum_ll,
+        ymax=rd_diff_sum_ul),
+
+    fatten=1,
+    )+
   labs(
     x="Target percentile",
     y="Difference in risk differences\n(per 100,000)\n(target scenario-baseline)"
