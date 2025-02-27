@@ -283,13 +283,13 @@ all_scenarios_summary_pt %>%
 A plot of the "difference in risk differences" column in the above table.
 The vertical error bars denote the 95% uncertainty interval.
 ```{r}
-#comment: add uncertainty intervals to this
 #| echo: false
 #| warning: false
 #| message: false
 setwd(here("data-processed"))
 load("all_scenarios_summary_pt.RData")
 load("all_scenarios_summary_boot.RData") 
+#comment: add uncertainty intervals to this
 
 all_scenarios_summary_pt  %>%
   left_join(all_scenarios_summary_boot,by="target_percentile") %>% 
