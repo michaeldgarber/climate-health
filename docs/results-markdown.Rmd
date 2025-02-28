@@ -419,7 +419,7 @@ wf_ac_scenarios_all_pt %>%
   )
 ```
 
-## Facet map
+## Facet map: change in spatial distribution
 Show how the distribution changes spatially over the scenarios
 ```{r}
 #| echo: false
@@ -555,5 +555,33 @@ qtm_rd_sc_100=tm_basemap("CartoDB.Positron")+
     ) 
 qtm_rd_sc_100
 ```
+
+## Comparing any two scenarios
+Compare raising to the 80th percentile with the 30th percentile, for example
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 10
+setwd(here("data-processed"))
+load(file="scenario_compare_full_join.RData")
+scenario_compare_full_join %>% 
+    #a strange rounding issue. this works to get the filter to work
+  filter(
+    round(target_percentile_upper,2)==.8) %>% 
+  filter(
+    round(target_percentile_lower,2)==.3) %>% 
+  ggplot(aes(x=rd_diff_diff_pt))+
+  #make bins shorter to make the visualization clearer
+  #.2 is too coarse;
+  geom_histogram(binwidth=.05)+
+#  facet_grid(rows=vars(target_percentile))+
+  theme_bw(base_size = 16)+
+    labs(
+    y="Number of ZCTAs",
+    #using \n for line break
+    x="Difference in difference in risk differences\nper 100,000\n(80th: Target-Baseline)-(30th: Target-Baseline)")
+```
+
 
 
