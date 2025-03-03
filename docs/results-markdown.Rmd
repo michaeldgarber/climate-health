@@ -175,6 +175,8 @@ wf_ac_zcta_ruca_wrangle %>%
 
 
 ### Map of standard error of risk difference
+To see spatial distribution of precision in effect estimates.
+As above, more precise values are in urban centers such as SF Bay, LA, and SD.
 ```{r}
 #| echo: false
 #| warning: false
@@ -307,7 +309,10 @@ The resulting uncertainty interval is the 2.5th and 97.5th percentiles.
 ## Overall summary
 
 ### Table
-There are **1,396** total zip codes
+There are **1,396** total zip codes.
+
+The right-most columns present the difference in risk differences between the target scenario and the baseline scenario (i.e., a difference in risk differences).
+
 
 ```{r}
 #| echo: false
