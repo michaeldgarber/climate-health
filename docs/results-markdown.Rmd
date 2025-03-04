@@ -14,9 +14,16 @@ Using rmarkdown because quarto and tmap are not working well together at the mom
 
 URL of this page: https://michaeldgarber.github.io/climate-health/results-markdown.html
 
-Some related in-progress Shiny apps:
+Some related in-progress Shiny apps, which may not be fully functional:
 
-*
+* An app with interactive (leaflet) maps displaying how the difference in risk differences between target and baseline scenarios varies over scenarios. Currently this works with mapview, but not tmap. They are similar mapping packages. For this purpose, I prefer tmap as it provides clearer binning of values, so will keep working on why interactive tmaps are not working on the server. https://michaeldgarber.shinyapps.io/tmap-interactive/
+
+* Same as above but using static (non-interactive) maps. Note that I am currently working on how to get this shiny app to display on the server with a basemap. I can currently get this to work with a basemap locally on my computer, but it fails upon pushing to the server. https://michaeldgarber.shinyapps.io/tmap-static-lite/
+
+* An app comparing the difference in risk differences between two selected scenarios (e.g., 80th percentile with 30th percentile): https://michaeldgarber.shinyapps.io/compare-scenarios/
+
+
+
 
 ```{r}
 #| echo: false
