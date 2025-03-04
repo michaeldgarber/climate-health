@@ -121,6 +121,7 @@ Consider limiting analyses to only those ZCTAS whose baseline risk differences a
 
 ### SD in baseline Risk difference by zip-code rural-urban commmuting code
 Definitions of rural-urban commuting codes:
+
 1. Metropolitan area core: primary flow within an urbanized area (UA)
 2. Metropolitan area high commuting: primary flow 30% or more to a UA
 3. Metropolitan area low commuting: primary flow 10% to 30% to a UA
