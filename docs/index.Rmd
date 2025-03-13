@@ -1,0 +1,30 @@
+---
+title: "Home page for climate & health projet"
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+---
+
+# Estimating benefits of greening on heat-related hospitalizations
+
+https://michaeldgarber.github.io/heat-hosp-california/vis-check-plots.html>
+
+https://michaeldgarber.github.io/climate-health/heat-hosp-green-hia/vis-static-maps.html
+
+
+https://michaeldgarber.github.io/climate-health/heat-hosp-green-hia/vis-interactive-maps.html
+
+
+Shiny app: TBD
+
+# Impact of varying air conditioning on effect of wildfire on acute-care utilization
+https://michaeldgarber.github.io/climate-health/results-markdown.html 
+
+
+https://michaeldgarber.shinyapps.io/tmap-interactive/
+
+https://michaeldgarber.shinyapps.io/tmap-static/
+
+https://michaeldgarber.shinyapps.io/compare-scenarios/
