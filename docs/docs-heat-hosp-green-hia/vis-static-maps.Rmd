@@ -1,0 +1,188 @@
+---
+title: "Static maps"
+author: "Michael D Garber"
+date: "`r Sys.Date()`"
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+---
+
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#March 13, 2025: updating in the more general climate-health project folder
+library(readr)
+library(readxl)
+library(here)
+library(tidyverse)
+library(viridis)
+library(sf)
+#load measures
+source(
+  here("scripts","scripts-heat-hosp-green-hia","read-attrib-hosps-ratios-diffs.R"))
+setwd(here("data-processed"))
+load("zcta_ca_geo_simplified.RData")
+```
+
+
+
+# IRR
+
+## Population-based scenarios: Impervious surfaces vs. Tree canopy
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+ggplot_facet_pb_imp_v_tree=function(df,measure_value, direction_value){
+  df %>% 
+  ggplot()+
+  geom_sf(
+    aes(fill=value_cat),
+    linewidth=.05)+
+  #change palette to brewer diverging
+  # scale_fill_brewer(
+  #   type="div",
+  #   palette = "RdYlBu",
+  #   direction=direction_value
+  # )+
+  scale_fill_viridis(
+    direction=direction_value, #flip direction for ratios
+    discrete=TRUE,
+    name=measure_value, #legend title
+    na.value="grey")+
+  # theme_classic()+
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title = element_blank()
+  )+
+  facet_grid(
+    cols=vars(scenario_intervention)
+  )
+}
+
+gg_irr_pb=zcta_ca_geo_simplified %>% 
+  left_join(irr_long, by = "zcta") %>% 
+  filter(scenario_type_3 =="Population-based") %>% 
+  ggplot_facet_pb_imp_v_tree(measure_value="IRR",direction_value=-1)
+
+gg_irr_pb
+```
+
+
+## Proportionate Universalism and Targeted Scenarios
+### Impervious Surfaces
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+ggplot_facet_each_int_type=function(df, measure_value, direction_value){
+  df %>% 
+  filter(scenario_type_3 !="Population-based") %>% #excluding these
+  ggplot()+
+  geom_sf(
+    aes(fill=value_cat),
+    linewidth=.05)+
+  #change palette to brewer diverging
+    #makes clearer when ratio is above 1
+  # scale_fill_brewer(
+  #   type="div",
+  #   palette = "RdYlBu",
+  #   direction=direction_value
+  # )+
+  scale_fill_viridis(
+    direction=direction_value, #flip direction for ratios
+    discrete=TRUE,
+    name=measure_value, #legend title
+    na.value="grey")+
+#  theme_classic()+
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title = element_blank()
+    )+
+  facet_grid(
+    cols=vars(scenario_sub_type),
+    rows=vars(scenario_type_3)
+  )
+  
+}
+
+zcta_ca_geo_simplified %>% 
+  left_join(irr_long, by = "zcta") %>% 
+  filter(scenario_intervention=="Imp") %>% 
+  ggplot_facet_each_int_type(measure_value="IRR",direction_value=-1)
+
+
+```
+
+### Tree canopy
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+zcta_ca_geo_simplified %>% 
+  left_join(irr_long, by = "zcta") %>% 
+  filter(scenario_intervention=="Tree") %>% 
+  ggplot_facet_each_int_type(measure_value="IRR",direction_value=-1)
+```
+
+# IRD
+
+## Population-based scenarios: Impervious surfaces vs. Tree canopy
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+zcta_ca_geo_simplified %>% 
+  left_join(ird_long, by = "zcta") %>% 
+  filter(scenario_type_3 =="Population-based") %>% 
+  ggplot_facet_pb_imp_v_tree(measure_value="IRD",direction_value=1)
+```
+
+### Impervious surfaces
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+zcta_ca_geo_simplified %>% 
+  left_join(ird_long, by = "zcta") %>% 
+  filter(scenario_intervention=="Imp") %>% 
+  ggplot_facet_each_int_type(measure_value="IRD",direction_value=1)
+```
+
+### Tree canopy
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+zcta_ca_geo_simplified %>% 
+  left_join(ird_long, by = "zcta") %>% 
+  filter(scenario_intervention=="Tree") %>% 
+  ggplot_facet_each_int_type(measure_value="IRD",direction_value=1)
+```
+
+
+# Difference, number of cases
+
+## Population-based scenarios: Impervious surfaces vs. Tree canopy
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+zcta_ca_geo_simplified %>% 
+  left_join(n_cases_diff_long, by = "zcta") %>% 
+  filter(scenario_type_3 =="Population-based") %>% 
+  ggplot_facet_pb_imp_v_tree(measure_value="n_cases_diff",direction_value=1)
+```
+
+### Impervious surfaces
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+zcta_ca_geo_simplified %>% 
+  left_join(n_cases_diff_long, by = "zcta") %>% 
+  filter(scenario_intervention=="Imp") %>% 
+  ggplot_facet_each_int_type(measure_value="n_cases_diff",direction_value=1)
+```
+
+### Tree canopy
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+zcta_ca_geo_simplified %>% 
+  left_join(n_cases_diff_long, by = "zcta") %>% 
+  filter(scenario_intervention=="Tree") %>% 
+  ggplot_facet_each_int_type(measure_value="n_cases_diff",direction_value=1)
+```
+
