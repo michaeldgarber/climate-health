@@ -9,6 +9,7 @@ output:
     toc_depth: 4
 ---
 
+Create faceted static maps using ggplot2
 
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 #March 13, 2025: updating in the more general climate-health project folder
@@ -18,11 +19,18 @@ library(here)
 library(tidyverse)
 library(viridis)
 library(sf)
+library(maptiles)#to get basemap
+library(tidyterra) #to plot the basemap
 #load measures
 source(
   here("scripts","scripts-heat-hosp-green-hia","read-attrib-hosps-ratios-diffs.R"))
 setwd(here("data-processed"))
 load("zcta_ca_geo_simplified.RData")
+load("california_boundaries_sf.RData")
+
+#get tiles for basemap
+california_bmap_cartodbpositron=get_tiles(
+  california_boundaries_sf,  provider = "CartoDB.Positron", crop = TRUE)
 ```
 
 
@@ -34,6 +42,8 @@ load("zcta_ca_geo_simplified.RData")
 ggplot_facet_pb_imp_v_tree=function(df,measure_value, direction_value){
   df %>% 
   ggplot()+
+  #March 13, 2025: add a basemap
+  geom_spatraster_rgb(data = california_bmap_cartodbpositron) +
   geom_sf(
     aes(fill=value_cat),
     linewidth=.05)+
@@ -80,6 +90,7 @@ ggplot_facet_each_int_type=function(df, measure_value, direction_value){
   df %>% 
   filter(scenario_type_3 !="Population-based") %>% #excluding these
   ggplot()+
+  geom_spatraster_rgb(data = california_bmap_cartodbpositron) +
   geom_sf(
     aes(fill=value_cat),
     linewidth=.05)+
