@@ -1,0 +1,395 @@
+---
+title: "Interactive maps: estimating benefits of greening on heat-related hospitalizations"
+author: "Michael D Garber"
+date: "`r Sys.Date()`"
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+---
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#Load data 
+#March 13, 2025
+#copied from climate-health/docs/heat-hosp-green-hia/vis-interactive-maps.qmd
+#as tmap interactive and quarto don't seem to work well right now
+#Updated with tmap v 4 code as well
+library(here)
+library(mapview)  
+library(tidyverse)
+library(viridis)
+library(viridisLite)
+library(leaflet)
+library(leaflet.extras)
+library(leafgl)
+library(cols4all)
+library(tmap)
+library(tmaptools)
+library(RColorBrewer)
+source(
+  here("scripts","scripts-heat-hosp-green-hia","read-attrib-hosps-ratios-diffs.R"))
+setwd(here("data-processed"))
+load("zcta_ca_geo_simplified.RData")
+load("attrib_hosps_for_summary_nogeo.RData")
+```
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#define some color palettes that flip at 1
+#Mar 13, 2025: I don't use these palettes in tmap
+pal_rdylgn5=RColorBrewer::brewer.pal(n=5,"RdYlGn")
+pal_rdylgn5_rev=rev(pal_rdylgn5)
+
+pal_rdylbu=RColorBrewer::brewer.pal(n=5,"RdYlBu")
+pal_rdylbu_rev=rev(pal_rdylbu)
+
+viridis_5=viridis(5)
+```
+
+# Baseline maps: hospitalizations and covariates
+## Attributable number of hospitalizations per heat-wave day (baseline)
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+tmap_mode("view") #run again just in case it was changed above.
+
+tmap_attrib_hosps= zcta_ca_geo_simplified %>% 
+  dplyr::select(-contains("pop")) %>% 
+  dplyr::select(-contains("zcta_in_cali")) %>% 
+  left_join(attrib_hosps_for_summary_nogeo, by = "zcta") %>% 
+  filter(is.na(attrib_hosps)==F) %>% 
+  dplyr::select(zcta, contains("attrib_hosps")) %>% 
+  tm_shape()+ #begin with tmap shape. pipe in the above.
+  tm_basemap("CartoDB.Positron")+#define the basemap
+  tm_polygons(
+    fill = "attrib_hosps",
+    lwd=0.05,
+    fill.legend= tm_legend("Heat-attributable hospitalizations per heat-wave day"),
+    fill.scale=tm_scale_intervals(
+      style="pretty",
+      values="matplotlib.viridis")
+  )
+
+#tmap_attrib_hosps
+
+#tmap is failing for some reason. try mapview instead
+mv_tmap_attrib_hosps= zcta_ca_geo_simplified %>% 
+  dplyr::select(-contains("pop")) %>% 
+  dplyr::select(-contains("zcta_in_cali")) %>% 
+  left_join(attrib_hosps_for_summary_nogeo, by = "zcta") %>% 
+  filter(is.na(attrib_hosps)==F) %>% 
+  dplyr::select(zcta, contains("attrib_hosps")) %>% 
+  mapview(zcol="attrib_hosps",
+          layer.name="Heat-attributable hospitalizations",
+          lwd=0.1)
+mv_tmap_attrib_hosps
+
+```
+
+## Attributable number of hospitalizations per heat-wave day (baseline) per population
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+tmap_attrib_hosps_per_pop= zcta_ca_geo_simplified %>% 
+  dplyr::select(-contains("pop")) %>% 
+  dplyr::select(-contains("zcta_in_cali")) %>% 
+  left_join(attrib_hosps_for_summary_nogeo, by = "zcta") %>% 
+  filter(is.na(attrib_hosps)==F) %>% 
+  dplyr::select(zcta, contains("attrib_hosps")) %>% 
+  tm_shape()+ #begin with tmap shape. pipe in the above.
+  tm_basemap("CartoDB.Positron")+#define the basemap
+  tm_polygons(
+    fill = "attrib_hosps_per_pop",
+    lwd=0.05,
+    fill.legend= tm_legend("Heat-attributable hospitalizations per heat-wave day per population"),
+    fill.scale=tm_scale_intervals(
+      style="pretty",
+      values="matplotlib.viridis")
+  )
+  
+
+#tmap_attrib_hosps_per_pop
+
+#tmap is failing for some reason. try mapview instead
+mv_tmap_attrib_hosps_per_pop= zcta_ca_geo_simplified %>% 
+  dplyr::select(-contains("pop")) %>% 
+  dplyr::select(-contains("zcta_in_cali")) %>% 
+  left_join(attrib_hosps_for_summary_nogeo, by = "zcta") %>% 
+  filter(is.na(attrib_hosps_per_pop)==F) %>% 
+  #remove infinity
+  filter(attrib_hosps_per_pop<100) %>% 
+  dplyr::select(zcta, contains("attrib_hosps_per_pop")) %>% 
+  mapview(zcol="attrib_hosps_per_pop",
+          layer.name="Heat-attributable hospitalizations per pop.",
+          lwd=0.1)
+mv_tmap_attrib_hosps_per_pop
+
+```
+
+## Tree canopy
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+tmap_mode("view")  
+#Use tmap instead of qtm
+tmap_tree= zcta_ca_geo_simplified %>% 
+  left_join(covars, by = "zcta") %>% 
+  #remove everything without a geometry
+  filter(is.na(TreeCanopy)==F) %>% 
+  tm_shape()+ #begin with tmap shape. pipe in the above.
+  tm_basemap("CartoDB.Positron")+#define the basemap
+  tm_polygons(
+    fill = "TreeCanopy",
+    lwd=0.5,
+    #Change legend. This took some doing to get right.
+    #Use X.legend where X corresponds to the layer being
+    #visualized, fill here
+    #See https://r-tmap.github.io/tmap/reference/qtm.html
+    fill.legend= tm_legend("Tree canopy share"),
+    
+    #This is how to change the colors. select a viridis scale
+    #https://r-tmap.github.io/tmap/articles/adv_shiny
+    #within matplotlib
+    fill.scale=tm_scale_intervals(
+            #keep number of categories fewer. see
+      #https://r-tmap.github.io/tmap/articles/basics_scales
+
+      style="pretty",
+      values="brewer.yl_gn")
+) 
+
+tmap_tree
+```
+
+## Impervious surface
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+tmap_impsurf= zcta_ca_geo_simplified %>% 
+  left_join(covars, by = "zcta") %>% 
+  filter(is.na(ImpervSurf)==F) %>% 
+  tm_shape()+ #begin with tmap shape. pipe in the above.
+  tm_basemap("CartoDB.Positron")+#define the basemap
+  tm_polygons(
+    fill = "ImpervSurf",
+    lwd=0.5,
+    fill.legend= tm_legend("Impervious surfaces"),
+    fill.scale=tm_scale_intervals(
+      style="pretty",
+      values="brewer.reds")
+) 
+
+tmap_impsurf
+```
+## SVI
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+tmap_svi= zcta_ca_geo_simplified %>% 
+  left_join(covars, by = "zcta") %>% 
+  filter(is.na(SVI)==F) %>% 
+  tm_shape()+ #begin with tmap shape. pipe in the above.
+  tm_basemap("CartoDB.Positron")+#define the basemap
+  tm_polygons(
+    fill = "SVI",
+    lwd=0.5,
+    fill.legend= tm_legend("SVI"),
+    fill.scale=tm_scale_intervals(
+      style="pretty",
+      values="brewer.purples")
+) 
+
+tmap_svi
+
+```
+
+# IRR
+
+## Impervious surfaces
+
+### Population-based
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#impervious surfaces
+irr_imp_pb =  irr_long %>% 
+  filter(scenario_intervention=="Imp") %>% 
+  filter(scenario_type_7=="Pop. based") %>% 
+  dplyr::select("zcta", starts_with("scenario"), "measure", starts_with("value")) 
+
+tmap_mode("view") #run again just in case it was changed above.
+
+
+#see below for defining palette
+#https://www.rdocumentation.org/packages/tmap/versions/3.3-4/topics/qtm
+tmap_irr_imp_pb= zcta_ca_geo_simplified %>% 
+  left_join(irr_imp_pb, by = "zcta") %>% 
+  #remove everything without a geometry
+  filter(is.na(value)==F) %>% 
+  tm_shape()+ #begin with tmap shape. pipe in the above.
+    tm_basemap("CartoDB.Positron")+#define the basemap
+  tm_polygons(
+    fill = "value_cat",
+    lwd=.001,
+    fill.legend= tm_legend("IRR"),
+    #This is technically categorical, as I
+    #already divided it up
+    fill.scale=tm_scale_categorical(
+#      values="brewer.rd_bu" #also tried brewer.rd_bu
+      #Note all you have to do flip the palette is put a minus
+      #sign in front of it
+      values="-brewer.rd_yl_bu"
+    )
+ )
+
+tmap_irr_imp_pb
+```
+
+### Proportionate Universalism 1
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#impervious surfaces
+irr_imp_pu1 =  irr_long %>% 
+  filter(scenario_intervention=="Imp") %>% 
+  filter(scenario_type_7=="Prop. Univ. 1") %>% 
+  dplyr::select("zcta", starts_with("scenario"), "measure", starts_with("value")) 
+
+tmap_irr_imp_pu1= zcta_ca_geo_simplified %>% 
+  left_join(irr_imp_pu1, by = "zcta") %>% 
+  #remove everything without a geometry
+  filter(is.na(value)==F) %>% 
+    tm_shape()+ #begin with tmap shape. pipe in the above.
+    tm_basemap("CartoDB.Positron")+#define the basemap
+  tm_polygons(
+    fill = "value_cat",
+    lwd=.001,
+    fill.legend= tm_legend("IRR"),
+    #This is technically categorical, as I
+    #already divided it up
+    fill.scale=tm_scale_categorical(
+#      values="brewer.rd_bu" #also tried brewer.rd_bu
+      #Note all you have to do flip the palette is put a minus
+      #sign in front of it
+      values="-brewer.rd_yl_bu"
+    )
+ )
+  
+tmap_irr_imp_pu1
+```
+
+### Proportionate Universalism 2
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#impervious surfaces
+#table(irr_long$scenario_type_7)
+irr_imp_pu2 =  irr_long %>% 
+  filter(scenario_intervention=="Imp") %>% 
+  filter(scenario_type_7=="Prop. Univ. 2") %>% 
+  dplyr::select("zcta", starts_with("scenario"), "measure", starts_with("value")) 
+
+tmap_irr_imp_pu2= zcta_ca_geo_simplified %>% 
+  left_join(irr_imp_pu2, by = "zcta") %>% 
+  filter(is.na(value)==F) %>% 
+  tm_shape()+ #begin with tmap shape. pipe in the above.
+  tm_basemap("CartoDB.Positron")+#define the basemap
+  tm_polygons(
+    fill = "value_cat",
+    lwd=.001,
+    fill.legend= tm_legend("IRR"),
+    fill.scale=tm_scale_categorical(
+      values="-brewer.rd_yl_bu"
+    )
+ )
+
+tmap_irr_imp_pu2
+```
+
+### Proportionate Universalism 3
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#impervious surfaces
+#table(irr_long$scenario_type_7)
+irr_imp_pu3 =  irr_long %>% 
+  filter(scenario_intervention=="Imp") %>% 
+  filter(scenario_type_7=="Prop. Univ. 3") %>% 
+  dplyr::select("zcta", starts_with("scenario"), "measure", starts_with("value")) 
+
+tmap_irr_imp_pu3= zcta_ca_geo_simplified %>% 
+  left_join(irr_imp_pu3, by = "zcta") %>% 
+  filter(is.na(value)==F) %>% 
+  tm_shape()+ #begin with tmap shape. pipe in the above.
+  tm_basemap("CartoDB.Positron")+#define the basemap
+  tm_polygons(
+    fill = "value_cat",
+    lwd=.001,
+    fill.legend= tm_legend("IRR"),
+    fill.scale=tm_scale_categorical(
+      values="-brewer.rd_yl_bu"
+    )
+ )
+
+tmap_irr_imp_pu3
+```
+
+## Tree canopy
+
+# IRD
+
+## Impervious surfaces
+
+### Population-based
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#impervious surfaces
+ird_imp_pb =  ird_long %>% 
+  filter(scenario_intervention=="Imp") %>% 
+  filter(scenario_type_7=="Pop. based") %>% 
+  dplyr::select("zcta", starts_with("scenario"), "measure", starts_with("value")) 
+
+tmap_mode("view") #run again just in case it was changed above.
+
+#see below for defining palette
+#https://www.rdocumentation.org/packages/tmap/versions/3.3-4/topics/qtm
+tmap_ird_imp_pb= zcta_ca_geo_simplified %>% 
+  left_join(ird_imp_pb, by = "zcta") %>% 
+  filter(is.na(value)==F) %>% 
+  tm_shape()+ #begin with tmap shape. pipe in the above.
+  tm_basemap("CartoDB.Positron")+#define the basemap
+  tm_polygons(
+    fill = "value_cat",
+    lwd=.001,
+    fill.legend= tm_legend("IRD"),
+    fill.scale=tm_scale_categorical(
+      values="matplotlib.viridis"
+    )
+ )
+
+tmap_ird_imp_pb
+```

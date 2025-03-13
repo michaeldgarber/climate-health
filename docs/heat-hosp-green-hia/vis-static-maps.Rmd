@@ -1,5 +1,5 @@
 ---
-title: "Static maps"
+title: "Static maps: estimating benefits of greening on heat-related hospitalizations"
 author: "Michael D Garber"
 date: "`r Sys.Date()`"
 output:
@@ -126,7 +126,9 @@ ggplot_facet_each_int_type=function(df, measure_value, direction_value){
 zcta_ca_geo_simplified %>% 
   left_join(irr_long, by = "zcta") %>% 
   filter(scenario_intervention=="Imp") %>% 
-  ggplot_facet_each_int_type(measure_value="IRR",direction_value=-1)
+  ggplot_facet_each_int_type(
+    measure_value="IRR",
+    direction_value=-1)
 
 
 ```
