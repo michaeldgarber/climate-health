@@ -12,6 +12,7 @@ output:
 #| echo: false
 #| warning: false
 #| message: false
+#| results: "hide"
 #run this and then everything is ready to go
 library(here)
 source(here("scripts","scripts-heat-hosp-green-hia", "analysis-summary-attrib-hosps.R"))
@@ -60,13 +61,17 @@ source(here("scripts","scripts-heat-hosp-green-hia", "analysis-summary-attrib-ho
 
         -   Scenario BIII3: Decrease by 10% for top 1/5th of hospitalization burden ... down to 2% for bottom 1/5th
         
-# Summary results (Table 2)
+# Summary results (akin Table 2)
+
+Similar to your current Table 2
+
 ## Keeping denominator the same across scenarios
 
 ```{r}
 #| echo: false
 #| warning: false
 #| message: false
+
 attrib_hosps_by_scenario_same_pop=n_cases_diff_wide_by_scenario %>% 
   left_join(attrib_hosps_for_summary_nogeo,by="zcta") %>% 
 #  filter(zcta_intervened==1) %>% #limit to intervention zip codes
@@ -130,7 +135,8 @@ attrib_hosps_by_scenario_restrict_pop %>%
 ```
 
 ## Boxplots
-Summary of summary results over scenarios
+Summarizing summary results over scenarios.
+
 ### No change to denominator
 
 #### Difference in number of cases (absolute benefit)
@@ -151,7 +157,7 @@ attrib_hosps_by_scenario_same_pop %>%
   )
 ```
 
-Summarized by intervention type (tree vs imp).
+Summarized by greening strategy (tree canopy vs. impervious surface).
 ```{r}
 #| echo: false
 #| warning: false
@@ -181,8 +187,7 @@ attrib_hosps_by_scenario_same_pop %>%
   )
 ```
 
-Summarized by intervention type (tree vs imp)
-Both tree canopy and impervious surface
+Summarized by greening strategy (tree canopy vs. impervious surface)
 ```{r}
 #| echo: false
 #| warning: false
@@ -213,7 +218,7 @@ attrib_hosps_by_scenario_same_pop %>%
   )
 ```
 
-Summarized by intervention type (tree vs imp).
+Summarized by greening strategy (tree canopy vs. impervious surface).
 ```{r}
 #| echo: false
 #| warning: false
@@ -248,7 +253,7 @@ attrib_hosps_by_scenario_restrict_pop %>%
   )
 ```
 
-Summarized by intervention type (tree vs imp).
+Summarized by greening strategy (tree canopy vs. impervious surface).
 ```{r}
 #| echo: false
 #| warning: false
@@ -279,7 +284,7 @@ attrib_hosps_by_scenario_restrict_pop %>%
   )
 ```
 
-Summarized by intervention type (tree vs imp).
+Summarized by greening strategy (tree canopy vs. impervious surface).
 ```{r}
 #| echo: false
 #| warning: false
@@ -310,7 +315,7 @@ attrib_hosps_by_scenario_restrict_pop %>%
   )
 ```
 
-Summarized by intervention type (tree vs imp).
+Summarized by greening strategy (tree canopy vs. impervious surface).
 ```{r}
 #| echo: false
 #| warning: false
