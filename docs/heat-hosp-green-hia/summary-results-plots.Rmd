@@ -1,0 +1,325 @@
+---
+title: "summary-results-plots"
+date: "`r Sys.Date()`"
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+---
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#run this and then everything is ready to go
+library(here)
+source(here("scripts","scripts-heat-hosp-green-hia", "analysis-summary-attrib-hosps.R"))
+```
+
+
+# Scenario definitions
+
+-   Tree canopy
+
+    -   Population-based Scenario: AI: Increase by 10% in all zip codes
+
+    -   Targeted
+
+        -   Scenario AII1: Increase by 10% in zip codes in the lowest 1/5th of current TC cover (i.e. \<=20th pctile)
+
+        -   Scenario AII2: Increase by 10% in zip codes in the highest 1/5th of the Social Vulnerability Index (i.e. \>80th pctile)
+
+        -   Scenario AII3: Increase by 10% in zip codes in the highest 1/5th of hospitalization burden (i.e. \>80th pctile)
+
+    -   Proportionate-universalism
+
+        -   Scenario AIII1: Increase by 10% for bottom 1/5th of current TC cover... down to 2% for top 1/5th
+
+        -   Scenario AIII2: Increase by 10% for top 1/5th of SVI ... down to 2% for bottom 1/5th
+
+        -   Scenario AIII3: Increase by 10% for top 1/5th of hospitalization burden ... down to 2% for bottom 1/5th
+
+-   Impervious surface cover
+
+    -   Population-based: Scenario BI: Decrease by 10% in all zip codes
+
+    -   Targeted
+
+        -   Scenario BII1: Decrease by 10% in zip codes in the highest 1/5th of current imperv cover (i.e. \>80th pctile)
+
+        -   Scenario BII2: Decrease by 10% in zip codes in the highest 1/5th of the Social Vulnerability Index (i.e. \>80th pctile)
+
+        -   Scenario BII3: Decrease by 10% in zip codes in the highest 1/5th of hospitalization burden (i.e. \>80th pctile)
+
+    -   Proportionate-universalism
+
+        -   Scenario BIII1: Decrease by 10% for top 1/5th of current imperv cover ... down to 2% for bottom 1/5th
+
+        -   Scenario BIII2: Decrease by 10% for top 1/5th of SVI ... down to 2% for bottom 1/5th
+
+        -   Scenario BIII3: Decrease by 10% for top 1/5th of hospitalization burden ... down to 2% for bottom 1/5th
+        
+# Summary results (Table 2)
+## Keeping denominator the same across scenarios
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_same_pop=n_cases_diff_wide_by_scenario %>% 
+  left_join(attrib_hosps_for_summary_nogeo,by="zcta") %>% 
+#  filter(zcta_intervened==1) %>% #limit to intervention zip codes
+  group_by(scenario,scenario_intervention,scenario_type_3,scenario_type_7) %>% 
+  summarise(
+    n_zcta=n(),
+    pop=sum(pop,na.rm=T),
+    attrib_hosps=sum(attrib_hosps,na.rm=T),
+    n_cases_diff=sum(n_cases_diff,na.rm=T)
+  ) %>% 
+  mutate(
+    ir_baseline=attrib_hosps/pop,
+    ir_alt=(attrib_hosps-n_cases_diff)/pop,
+    ird=ir_alt-ir_baseline,
+    irr=ir_alt/ir_baseline
+  ) %>% 
+  ungroup()
+
+attrib_hosps_by_scenario_same_pop %>% 
+  dplyr::select(-contains("scenario_type_3")) %>% 
+  knitr::kable(
+    digits=c(0,0,0,
+             0,0,
+             1,3,
+             9,9,9,3)
+  )
+```
+
+
+## Restricting denominator to those zip codes intervened upon
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_restrict_pop=n_cases_diff_wide_by_scenario %>% 
+  left_join(attrib_hosps_for_summary_nogeo,by="zcta") %>% 
+   filter(zcta_intervened==1) %>% #limit to intervention zip codes
+  group_by(scenario,scenario_intervention,scenario_type_3,scenario_type_7) %>% 
+  summarise(
+    n_zcta=n(),
+    pop=sum(pop,na.rm=T),
+    attrib_hosps=sum(attrib_hosps,na.rm=T),
+    n_cases_diff=sum(n_cases_diff,na.rm=T)
+  ) %>% 
+  mutate(
+    ir_baseline=attrib_hosps/pop,
+    ir_alt=(attrib_hosps-n_cases_diff)/pop,
+    ird=ir_alt-ir_baseline,
+    irr=ir_alt/ir_baseline
+  )%>% 
+  ungroup()
+
+attrib_hosps_by_scenario_restrict_pop %>% 
+  dplyr::select(-contains("scenario_type_3")) %>% 
+  knitr::kable(
+    digits=c(0,0,0,
+             0,0,
+             1,3,
+             9,9,9,3)
+  )
+```
+
+## Boxplots
+Summary of summary results over scenarios
+### No change to denominator
+
+#### Difference in number of cases (absolute benefit)
+
+Summarized by intervention targeting type.
+Both tree canopy and impervious surface
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_same_pop %>% 
+  ggplot(aes(y=n_cases_diff))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+#    rows=vars(scenario_intervention),
+    cols=vars(scenario_type_3)
+  )
+```
+
+Summarized by intervention type (tree vs imp).
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_same_pop %>% 
+  ggplot(aes(y=n_cases_diff))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+        cols=vars(scenario_intervention)
+  )
+```
+
+#### IRD
+Summarized by intervention targeting type
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_same_pop %>% 
+  ggplot(aes(y=ird))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+#    rows=vars(scenario_intervention),
+    cols=vars(scenario_type_3)
+  )
+```
+
+Summarized by intervention type (tree vs imp)
+Both tree canopy and impervious surface
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_same_pop %>% 
+  ggplot(aes(y=ird))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+        cols=vars(scenario_intervention)
+  )
+```
+
+#### IRR
+Summarized by intervention targeting type.
+Both tree canopy and impervious surface
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_same_pop %>% 
+  ggplot(aes(y=irr))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+#    rows=vars(scenario_intervention),
+    cols=vars(scenario_type_3)
+  )
+```
+
+Summarized by intervention type (tree vs imp).
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_same_pop %>% 
+  ggplot(aes(y=irr))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+        cols=vars(scenario_intervention)
+  )
+```
+
+
+### Restricting denominator
+
+#### Difference in number of cases (absolute benefit)
+
+Summarized by intervention targeting type.
+Both tree canopy and impervious surface
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_restrict_pop %>% 
+  ggplot(aes(y=n_cases_diff))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+#    rows=vars(scenario_intervention),
+    cols=vars(scenario_type_3)
+  )
+```
+
+Summarized by intervention type (tree vs imp).
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_restrict_pop %>% 
+  ggplot(aes(y=n_cases_diff))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+        cols=vars(scenario_intervention)
+  )
+```
+
+#### IRD
+Summarized by intervention targeting type.
+Both tree canopy and impervious surface
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_restrict_pop %>% 
+  ggplot(aes(y=ird))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+#    rows=vars(scenario_intervention),
+    cols=vars(scenario_type_3)
+  )
+```
+
+Summarized by intervention type (tree vs imp).
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_restrict_pop %>% 
+  ggplot(aes(y=ird))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+        cols=vars(scenario_intervention)
+  )
+```
+
+#### IRR
+Summarized by intervention targeting type.
+Both tree canopy and impervious surface
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_restrict_pop %>% 
+  ggplot(aes(y=irr))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+#    rows=vars(scenario_intervention),
+    cols=vars(scenario_type_3)
+  )
+```
+
+Summarized by intervention type (tree vs imp).
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+attrib_hosps_by_scenario_restrict_pop %>% 
+  ggplot(aes(y=irr))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_grid(
+        cols=vars(scenario_intervention)
+  )
+```
