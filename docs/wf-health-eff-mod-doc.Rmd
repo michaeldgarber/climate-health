@@ -317,11 +317,15 @@ Then, in each replicate, propagate this uncertainty throughout the calculations 
 
 The resulting uncertainty interval is the 2.5th and 97.5th percentiles.
 
-Finally, we calculated the difference in rate differences between the baseline and target scenarios, i.e.,
+Finally, we calculated the difference in rate differences between the baseline and target scenarios.
 
 # Results
 
 A tabular summary of results over all ZCTAs follows.
+
+Target percentile refers to the percentile of the effect modifier to which all ZCTAs with values below that percentile value would be raised under the target scenario. For example, if the target scenario corresponds to the 60th percentile of air conditioning, all ZCTAs below the 60th percentile would have their A/C raised to the 60th percentile.
+
+The baseline rate difference refers to the rate difference attributable to wildfire under its status-quo value for the effect modifier. The target rate difference refers to the rate difference attributable to wildfire upon varying the ZCTA's value of the effect modifier. The analyses below present the difference in rate differences (RDs) between these two scenarios.
 
 An interactive dashboard with maps and results by scenario is here:
 
