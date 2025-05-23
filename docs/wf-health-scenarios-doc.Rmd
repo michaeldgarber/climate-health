@@ -1,0 +1,644 @@
+---
+title: "Simulating how environmental interventions may change the effect of wildfire on acute-care utilization"
+subtitle: "A shiny app"
+author: "Michael D Garber"
+date: "`r Sys.Date()`"
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+bibliography: references.bib
+---
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+library(here)
+library(mapview)  
+library(tmap)
+library(leafgl)
+library(tidyverse)
+library(viridis)
+library(viridisLite)
+library(leaflet)
+library(leaflet.extras)
+library(tmap)
+library(knitr)
+library(RColorBrewer)
+library(kableExtra)
+library(knitr)
+source(here("scripts","read-wrangle-eff-estimates.R"))#load measures
+source(here("scripts","data-mgmt-analyses-before-modeling-RD-as-outcome.R"))
+
+```
+
+Link to shiny app: <https://michaeldgarber.shinyapps.io/wf-emm/>
+
+# Introduction
+
+## Background: Do et al. (GeoHealth, 2024)
+
+Do and colleagues have recently estimated spatially varying effects of short-term exposure to wildfire PM2.5 on acute-care hospitalizations [@do2024] in California. They defined the exposure as a day with wildfire smoke PM~2.5~ ≥15 μg/m^3^. The outcome was the number of respiratory emergency department visits and unplanned hospitalizations.
+
+They used a case-crossover design to estimate effects at the level of the zip-code tabulation area (ZCTA) throughout 1,396 ZCTAs in California from 2006-2019. A map of these spatially varying effect estimates, expressed as a rate difference per 100,000 person-days, appears below (adapted from their figure 5).
+
+A positive rate difference (shades of green) indicates that wildfire had an estimated harmful effect (i.e., more) hospitalizations, while a negative value (purple shades) implies that wildfire led to fewer hospitalizations.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("wildfire_eff_zcta.RData")
+load("zcta_ca_geo_simplified.RData")
+
+tmap_mode("view") 
+
+sf_obj_for_tmap=zcta_ca_geo_simplified %>% 
+  left_join(wildfire_eff_zcta,by="zcta") %>% 
+  dplyr::select(
+    contains("zcta"),
+    contains("pop"),
+    contains("rd_baseline"),
+    contains("ac_prop")
+    ) %>% 
+  filter(is.na(rd_baseline_pt)==F)
+
+#Note the basemap construction
+tmap_rd_baseline= 
+  tm_basemap( 
+    #zoom=2, 
+    "CartoDB.Positron")+
+  tm_shape(sf_obj_for_tmap)+
+  tm_polygons(
+        fill = "rd_baseline_pt",
+        lwd=0.5,
+        fill.legend= tm_legend("Rate Difference (per 100k)"),
+        fill.scale=tm_scale_intervals(
+          midpoint=0,
+          n=8
+          )
+      )
+
+tmap_rd_baseline
+
+```
+
+In addition, they explored community characteristics possibly driving this spatial heterogeneity. The authors state:
+
+> We used meta‐regression to evaluate potential effect modification by community characteristics on the effect of a wildfire smoke day on acute care utilization at the ZCTA level. For each community characteristic, which was selected a priori, **we ran a meta‐regression of the pooled ZCTA‐specific rate difference on the community characteristic.** To preserve statistical power, we excluded 100 ZCTAs without complete data for 14 community characteristics other than A/C prevalence, and we excluded 274 ZCTAs for meta‐regression of the A/C prevalence. Our estimates are reported as rate difference per interquartile range increase of the community characteristic.
+
+Below, adapted from their figure 6, is a plot of the increase in rate difference per interquartile range (IQR) increase for each socio-demographic community characteristic they considered:
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+emm_rd_per_iqr %>% 
+  filter(var_type=="ses") %>% 
+  left_join(lookup_emm_measure_labels,by="emm_measure") %>% 
+  #re-order
+  mutate(
+    emm_measure_labels_reorder=fct_reorder(
+      as.factor(emm_measure_label), rd_per_iqr_pt)
+    ) %>% 
+  arrange(desc(rd_per_iqr_pt)) %>% 
+  ggplot(aes(x=rd_per_iqr_pt,y=emm_measure_labels_reorder))+
+  geom_point(stroke=0,size=.1)+
+  geom_pointrange(aes(xmin=rd_per_iqr_ll,xmax=rd_per_iqr_ul),fatten = .6)+
+  geom_vline(xintercept = 0,linetype="dotted")+ 
+  labs(
+    x="Rate difference per 100,000 (95% confidence interval)",
+    y="Community characteristic"
+  )+
+  theme_bw()
+```
+
+This analysis of effect modification describes how the estimated effect of wildfire smoke on acute-care utilization varies based on variation in the community characteristics. Results show, for example, that the wildfire-utilization effect was stronger in communities with lower levels of air conditioning and with higher levels of uninsured populations.
+
+Interpreting a specific value from the figure, an **increase** in A/C proportion from the 25th percentile to the 75th percentile was associated with a **0.239** (95% confidence interval: 0.0672, 0.411) **lower rate** rate difference in the effect of wildfire smoke on same-day respiratory acute-care utilization.
+
+## Distinction between effect modification vs interaction
+
+It is important to note that just because wildfire's effects on acute-care utilization vary across these values, it does not necessarilly mean that intervenining to *change* these variables would necessarily change the wildfire-healthcare-utilization effect.
+
+Tyler VanderWeele describes the important distinction between effect modification and interaction on p. 268 of his book, [Explanation in Causal Inference]{.underline} (bold added for emphasis here):
+
+> If we found that the effect of our primary exposure varied by strata defined by the secondary factor in this way, then we might call  this “effect heterogeneity” or “effect modification.” This might be useful, for example, in decisions about which subpopulations to target in order to maximize the effect of interventions. Provided that we have controlled for confounding of relationship between the primary exposure and the outcome, these estimates of effect modification or effect heterogeneity could be useful even if we have not controlled for confounding of the relationship between the secondary factor and the outcome. [@vanderweele2015a]
+>
+> **What we would not know, however, is whether the effect heterogeneity were due to the secondary factor itself, or something else associated with it.** If we have not controlled for confounding for the secondary factor, the secondary factor itself may simply be serving as a proxy for something that is causally relevant for the outcome [@vanderweele2007].
+
+VanderWeele continues (bold again added for its relevance here):
+
+> If we are interested principally in assessing the effect of the primary exposure within subgroups defined by a secondary factor then simply controlling for confounding for the relationship between the primary exposure and the outcome is sufficient. **However, if we want to intervene on the secondary factor in order to change the effect of the primary exposure then we need to control for confounding of the relationships of both factors with the outcome.** When we control for confounding for both factors we might refer to this as “causal interaction” in distinction from mere “effect heterogeneity” mentioned above [@vanderweele2009].
+
+That is, effect modification can be considered a description of variation in an effect of a primary exposure over values over a secondary variable, whereas assessment of interaction requires the secondary factor to be considered as a causal factor.
+
+To inform policy, it would be useful assess interaction to know what environmental factors could be intervened upon to mitigate wildfire's health effects. Both **tree canopy** and **air conditioning** could plausibly attenuate wildfire's health effects and in that way, **interact** with wildfire on the outcome. In the case of tree canopy, previous research has shown that green space can reduce air pollution.[@diener2021] And previous research in California has suggested that air conditioning use could mitigate the health effects of wildfires.[@stowell2025]
+
+In addition, they are socio-environmental pathways that are relatively amenable to intervention. It would be a realistic policy option to encourage more tree planting, for example, or institute policies to encourage more air conditoning use during wildfire events.
+
+However, as both of these factors may be associated with other factors on the causal pathway from wildfire to health, it would be important to control for potential confounders.
+
+## The need for locally developed health-impact assessment
+
+Furthermore, many health-impact assessment studies make a strong transportability assumption–using dose-response functions developed elsewhere and applying it to the local context. There is a need for locally tailored health-impact assessment studies.
+
+## Analysis goals
+
+The **primary goal** of this analysis is to assess how the distribution of the effect of wildfire onhealthcare utilization effect could change were there interventions changing environmental factors that influence the effect. We do so estimating the effect of tree canopy and air conditioning on the spatially varying rate difference.
+
+A **secondary goal**, related to training and skill development, is to explore the utility of R Shiny tools for presenting high-dimensional results with which a user can interact. For example, a user could choose to raise the distribution of the effect modifier to the 50th percentile and see how results might change.)
+
+# Methods
+
+The overall approach is as follows:
+
+1.  Estimate the effect of both tree canopy and air conditioning (separately) on the spatially varying rate difference, controlling for potential confounders that may influence these associations such as urban vs rural status, biome, and socioeconomic characteristics. In these models, we will also consider interaction variables, allowing the relationship between these main exposures (tree canopy and AC) and the rate difference to vary across strata of a third variable.
+2.  Use these models to simulate the overall burden and spatial distribution of healthcare utilization attributable to wildfire that could be averted by intervening upon these variables.that
+
+## Data exploration
+
+To inform modeling, we explored the distribution of all variables as well as bivariate associations between tree canopy, air conditioning, the rate difference, and other covariates.
+
+### Univariate distributions  
+
+#### Outcome: Rate difference per 100,000 person-days
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+options(scipen=999)
+
+wf_eff_emm_wide %>% 
+  group_by(ruca_cat) %>% 
+  summarise(
+    rd_100k_pt_med=median(rd_100k_quo_pt,na.rm=T),
+    rd_100k_pt_mean_wt=weighted.mean(
+        x=rd_100k_quo_pt,
+        w=pop
+  ))
+
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(x=rd_100k_quo_pt))+
+  geom_histogram()+
+  theme_bw()+
+  labs(x="Rate difference per 100,000 person-days")
+```
+
+#### Intervention variables: Tree canopy and air conditioning
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+options(scipen=999)
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(x=tree_canopy_prop))+
+  geom_histogram()+
+  theme_bw()+
+  labs(x="Proportion tree canopy")
+
+#more normal. use this instead
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(x=tree_canopy_prop_sqrt))+
+  geom_histogram()+
+  theme_bw()+
+  labs(
+    x="Proportion tree canopy (square root)"
+  )
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(x=ac_prop))+
+  geom_histogram()+
+  theme_bw()+
+  labs(
+    x="Proportion air conditioining"
+  )
+```
+
+#### Proportion above poverty and proportion insured
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+options(scipen=999)
+wf_eff_emm_wide %>% 
+  ggplot(aes(x=above_poverty_prop))+
+  geom_histogram()+
+  theme_bw()+
+  labs(x="Proportion above poverty")
+
+wf_eff_emm_wide %>% 
+  ggplot(aes(x=above_poverty_prop))+
+  geom_histogram()+
+  theme_bw()+
+  labs(x="Proportion with health insurance")
+```
+
+#### Biome and rural-urban classification
+
+Definitions of rural-urban commuting codes:
+
+1.  Metropolitan area core: primary flow within an urbanized area (UA)
+2.  Metropolitan area high commuting: primary flow 30% or more to a UA
+3.  Metropolitan area low commuting: primary flow 10% to 30% to a UA
+4.  Micropolitan area core: primary flow within an Urban Cluster of 10,000 to 49,999 (large UC)
+5.  Micropolitan high commuting: primary flow 30% or more to a large UC
+6.  Micropolitan low commuting: primary flow 10% to 30% to a large UC
+7.  Small town core: primary flow within an Urban Cluster of 2,500 to 9,999 (small UC)
+8.  Small town high commuting: primary flow 30% or more to a small UC
+9.  Small town low commuting: primary flow 10% to 30% to a small UC
+10. Rural areas: primary flow to a tract outside a UA or UC
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+library(tmap)
+setwd(here("data-input","biome-california"))
+load("biomes_14_california.RData") 
+biomes_14_california %>% 
+  rename(biome_name=BIOME_NAME) %>% 
+    qtm(
+    basemaps = "CartoDB.Positron",
+    lwd=.5,
+    fill = "biome_name",
+    fill.legend= tm_legend("Biome")
+)
+
+
+zcta_ca_geo_simplified %>% 
+  left_join(zcta_ruca2010,by="zcta") %>% 
+  qtm(
+    basemaps = "CartoDB.Positron",
+    lwd=.5,
+    fill = "ruca_cat",
+#    title = "RUCA",
+    fill.legend= tm_legend("RUCA category")
+)
+```
+
+### Bivariate and stratified associations
+
+#### RD x Tree canopy x Covariates
+
+Here are scatterplots plotting the rate difference against the (square root of) proportion tree canopy:
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=tree_canopy_prop_sqrt, y=rd_100k_quo_pt))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion tree canopy (square root)"
+  )
+```
+
+There is a slight negative association between tree canopy and the RD, but it is rather weak.
+
+We also stratified this association by urban-rural category:
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #remove values above the 99th percentile and below the 1st
+  ggplot(aes(x=tree_canopy_prop_sqrt, y=rd_100k_quo_pt))+
+  geom_point()+
+  facet_grid(
+    rows="ruca_cat"
+  )+
+  geom_smooth(method="lm")+
+  theme_bw()+
+    labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion tree canopy (square root)"
+    )
+```
+
+The stratified scatterplot suggests that in the most urban areas and in the least urban areas, higher tree canopy is associated with a **lower** rate difference, whereas in the other two RUCA categories, the association is in the other direction: higher tree canopy is associated with a **higher** rate difference (i.e., suggesting a more harmful effect of wildfire on the outcome).
+
+#### RD x Proportion A/C x Covariates
+
+The association with air conditioning is weakly negative.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=ac_prop, y=rd_100k_quo_pt))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion with air conditioning"
+  )
+```
+
+Like with tree canopy, the RD x A/C association varies by rural-urban category. It is more negative in more populous areas, and positive–suggesting air conditioning is associated with a **higher** difference effect of wildfire on hospitalizations–in less populous areas.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #remove values above the 99th percentile and below the 1st
+  ggplot(aes(x=ac_prop, y=rd_100k_quo_pt))+
+  geom_point()+
+  facet_grid(
+    rows="ruca_cat"
+  )+
+  geom_smooth(method="lm")+
+  theme_bw()+
+    labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion with air conditioning"
+    )
+```
+
+#### RD x proportion above poverty
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=above_poverty_prop, y=rd_100k_quo_pt))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion above poverty"
+  )
+```
+
+#### RD x proportion insured
+
+The association between the RD and proportion with insurance is stronger than that between proportion above poverty.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=insured_prop, y=rd_100k_quo_pt))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion insured"
+  )
+```
+
+#### RD x biome
+
+The RD distribution is in the positive direction in **Mediterranean Forests, Woodlands & Scrub** and more negative in all the others.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+wf_eff_emm_wide %>% 
+  group_by(biome_name_freq) %>% 
+  summarise(
+    rd_100k_pt_med=median(rd_100k_quo_pt,na.rm=T),
+    rd_100k_pt_mean_wt=weighted.mean(
+        x=rd_100k_quo_pt,
+        w=pop,
+        na.rm=T
+  )
+  ) %>% 
+  knitr::kable(digits=3)
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=biome_name_freq, y=rd_100k_quo_pt))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Biome"
+  )+
+  #see
+#  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+#### RD x urban-rural category
+
+The distribution is more negative in more rural areas, suggesting in those areas, wildfires had a **preventive** effect on healthcare utilization
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+wf_eff_emm_wide %>% 
+  group_by(ruca_cat) %>% 
+  summarise(
+    rd_100k_pt_med=median(rd_100k_quo_pt,na.rm=T),
+    rd_100k_pt_mean_wt=weighted.mean(
+        x=rd_100k_quo_pt,
+        w=pop,
+        na.rm=T
+  )
+  ) %>% 
+  knitr::kable(digits=3)
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=ruca_cat, y=rd_100k_quo_pt))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Rural-urban category"
+  )+
+  #see
+#  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+## Modeling
+
+Considering these empirical trends in the data along with substantive considerations of the plausible causal pathway, we decided upon the following models:
+
+### Tree canopy
+
+**Control variables**:
+
+-   proportion insured
+
+-   rural-urban category
+
+-   biome
+
+**Interaction**: by rural-urban category
+
+```{r}
+glm_rd_e_tree_canopy_prop_sqrt_conf_ins_biome_int_ruca =glm(
+  rd_quo_pt~tree_canopy_prop_sqrt +insured_prop + ruca_cat +
+    biome_name_freq+
+    tree_canopy_prop_sqrt*ruca_cat,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+
+summary(glm_rd_e_tree_canopy_prop_sqrt_conf_ins_biome_int_ruca)
+```
+
+### Air conditioning
+
+**Control variables**:
+
+-   proportion insured
+
+-   rural-urban category
+
+-   biome
+
+**Interaction**: by rural-urban category
+
+```{r}
+glm_rd_e_ac_prop_conf_ins_biome_int_ruca =glm(
+  rd_quo_pt~ac_prop +insured_prop + ruca_cat + biome_name_freq+
+    ac_prop*ruca_cat,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+summary(glm_rd_e_ac_prop_conf_ins_biome_int_ruca)
+```
+
+### Other modeling notes
+
+-   Considering the outcome in the model is itself a modeled result (with a point estimate and a standard error), we use meta-regression to weight observations (ZCTAs) with more precise estimates more highly. Specifically, we weight ZCTAs in each model proportional to the inverse of their standard error.
+
+-   We used simple linear regression because the outcome (the rate difference) is normally distributed. Unlike a rate, for example, it is not bounded by zero, so Poisson regression is not needed.
+
+## Predicting values over several scenarios
+
+### Scenario definitions
+
+We then used the model coefficients to predict a new rate difference between wildfire and acute-care utilization over various scenarios. For both tree canopy and proportion AC, we found quintile values (i.e., 20th percentile, 40th percentile, 60th percentile). We then developed scenarios where we raised the values of all ZCTAs below that quintile value to that quintile's value. And we plugged in the alternative value into the model to predict the new RD.
+
+For tree canopy, we found quintiles relative to biome because tree canopy is strongly associated with biome, and it may not be realistic to raise tree canopy in the desert up to the 80th percentile of a temperate forest.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=biome_name_freq, y=tree_canopy_prop))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Tree canopy proportion",
+    x="Biome"
+  )+
+  #see
+#  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+Air conditioning also varies considerably by biome, but presumably it is feasible to raise AC regardless of biome, so we not define scenarios relative to biome for AC.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+options(scipen=999)
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=biome_name_freq, y=ac_prop))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Air conditioning proportion",
+    x="Rural-urban category"
+  )+
+  #see
+#  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
+   scale_x_discrete(labels = scales::label_wrap(10))
+
+```
+
+### Calculating the difference between the two rate differences
+
+For both tree canopy and A/C, we calculated the difference between the alternative rate difference and the baseline (status-quo) rate difference.
+
+# Results
+
+Tables summarizing results 1) over all ZCTAs and 2) by RUCA are below.
+
+Target percentile refers to the percentile of the effect modifier to which all ZCTAs with values below that percentile value would be raised under the target scenario. For example, if the target scenario corresponds to the 60th percentile of air conditioning, all ZCTAs below the 60th percentile would have their A/C raised to the 60th percentile.
+
+**To-dos:**
+
+-   Rename variables in the table & define them
+
+-   incorporate uncertainty by bootstrapping
+
+-   add results for air conditioning (will be lower in magnitude)
+
+-   map results
+
+-   interactive dashboard with maps and results by scenario is here (**still need to update**): <https://michaeldgarber.shinyapps.io/wf-emm/>
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+library(knitr)
+library(kableExtra)
+setwd(here("data-processed"))
+load("tree_summary_overall.RData")
+load("tree_summary_ruca_cat.RData")
+
+tree_summary_overall_for_kable=tree_summary_overall #%>% 
+  # rename(
+  #   "Target percentile" = target_percentile,
+  #   "N, ZCTAs intervened" = n_zctas_intervene_char,
+  #   "Population affected" =pop_intervene_char,
+  #   "RD per 100,000 person-days, baseline scenario"=rd_baseline_per_100k_conc,
+  #   "RD per 100,000 person-days, target scenario"=rd_target_per_100k_conc,
+  #   "Difference in RD per 100,000 person-days, target scenario"=rd_diff_per_100k_conc
+  # )
+
+tree_summary_overall_for_kable %>% 
+  kable() %>% 
+  kableExtra::scroll_box(width = "800px", height = "400px") %>% 
+  kable_styling()
+```
+
+# References
