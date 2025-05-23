@@ -607,6 +607,8 @@ Target percentile refers to the percentile of the effect modifier to which all Z
 
 -   Rename variables in the table & define them
 
+-   express RD per 100k person-days again in table (current form: per 1 person-day)
+
 -   incorporate uncertainty by bootstrapping
 
 -   add results for air conditioning (will be lower in magnitude)
@@ -614,6 +616,8 @@ Target percentile refers to the percentile of the effect modifier to which all Z
 -   map results
 
 -   interactive dashboard with maps and results by scenario is here (**still need to update**): <https://michaeldgarber.shinyapps.io/wf-emm/>
+
+## Summary table by scenario 
 
 ```{r}
 #| echo: false
@@ -637,8 +641,21 @@ tree_summary_overall_for_kable=tree_summary_overall #%>%
 
 tree_summary_overall_for_kable %>% 
   kable() %>% 
+  kableExtra::scroll_box(width = "800px", height = "280px") %>% 
+  kable_styling()
+```
+
+## Summary table by scenario and rural-urban category
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+tree_summary_ruca_cat %>% 
+  kable() %>% 
   kableExtra::scroll_box(width = "800px", height = "400px") %>% 
   kable_styling()
+
 ```
 
 # References
