@@ -804,10 +804,6 @@ Tables summarizing results 1) over all ZCTAs and 2) by RUCA are below.
 
 Target percentile refers to the percentile of the effect modifier to which all ZCTAs with values below that percentile value would be raised under the target scenario. For example, if the target scenario corresponds to the 60th percentile of air conditioning, all ZCTAs below the 60th percentile would have their A/C raised to the 60th percentile.
 
-**To-dos:**
-
--   interactive dashboard with maps and results by scenario (**still need to update**): <https://michaeldgarber.shinyapps.io/wf-emm/>
-
 ### Summary table by scenario
 
 **Interpreting selected values:**
@@ -1242,6 +1238,10 @@ tmap_ac_scenario=
 
 tmap_ac_scenario
 ```
+
+## Shiny app
+
+<https://michaeldgarber.shinyapps.io/app-wf-int/>
 
 # Discussion points
 
