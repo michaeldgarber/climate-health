@@ -41,7 +41,7 @@ Corresponding shiny app: <https://michaeldgarber.shinyapps.io/app-wf-int/>
 
 Do and colleagues have recently estimated spatially varying effects of short-term exposure to wildfire PM2.5 on acute-care hospitalizations [@do2024] in California. They defined the exposure as a day with wildfire smoke PM~2.5~ ≥15 μg/m^3^.
 
-The outcome was the number of respiratory emergency department visits and unplanned hospitalizations.
+The outcome was the number of daily respiratory emergency department visits and unplanned hospitalizations.
 
 They used a case-crossover design to estimate effects at the level of the zip-code tabulation area (ZCTA) throughout 1,396 ZCTAs in California from 2006-2019. A map of these spatially varying effect estimates, expressed as a rate difference per 100,000 person-days, appears below (adapted from their figure 5).
 
@@ -117,13 +117,13 @@ emm_rd_per_iqr %>%
   theme_bw()
 ```
 
-This analysis of effect modification describes how the estimated effect of wildfire smoke on acute-care utilization varies based on variation in the community characteristics. Results show, for example, that the wildfire-utilization effect was stronger in communities with lower levels of air conditioning and with higher levels of uninsured populations.
+This analysis of effect modification describes how the estimated effect of wildfire smoke on acute-care utilization varies based on variation in the community characteristics. Results show, for example, that the ZCTA-level wildfire-utilization effect was negatively associated with air conditioning (more air conditioning –\> lower rate difference) and insurance status (more insurance –\> lower rate difference).
 
 Interpreting a specific value from the figure, an **increase** in A/C proportion from the 25th percentile to the 75th percentile was associated with a **0.239** (95% confidence interval: 0.0672, 0.411) **lower rate** rate difference in the effect of wildfire smoke on same-day respiratory acute-care utilization.
 
 ## Distinction between effect modification vs interaction
 
-It is important to note that just because wildfire's effects on acute-care utilization vary across these values, it does not necessarilly mean that intervenining to *change* these variables would necessarily change the wildfire-healthcare-utilization effect.
+It is important to note that just because wildfire's effects on acute-care utilization vary across these values, it does not necessarilly mean that intervenining to *change* these variables would change the wildfire-healthcare-utilization effect.
 
 Tyler VanderWeele describes the important distinction between effect modification and interaction on p. 268 of his book, [Explanation in Causal Inference]{.underline} (bold added for emphasis here):
 
@@ -137,11 +137,13 @@ VanderWeele continues (bold again added for its relevance here):
 
 That is, effect modification can be considered a description of variation in an effect of a primary exposure on the outcome over values over a third variable, whereas assessment of interaction requires the third variable to be considered as a causal factor with adjustment for confounding as needed.
 
-To inform policy, it would be useful assess interaction to know what environmental factors could be intervened upon to mitigate wildfire's health effects. Both **tree canopy** and **air conditioning** could plausibly attenuate wildfire's health effects and in that way, **interact** with wildfire on the outcome. In the case of tree canopy, previous research has shown that green space can reduce air pollution.[@diener2021] And previous research in California has suggested that air conditioning use could mitigate the health effects of wildfires.[@stowell2025]
+To inform policy, it would be useful assess interaction to know what environmental factors could be intervened upon to mitigate wildfire's health effects.
+
+Both **tree canopy** and **air conditioning** could plausibly attenuate wildfire's health effects and in that way, **interact** with wildfire on the outcome. In the case of tree canopy, previous research has shown that green space can reduce air pollution.[@diener2021] And previous research in California has suggested that air conditioning use could mitigate the health effects of wildfires.[@stowell2025]
 
 In addition, they are socio-environmental pathways that are relatively amenable to intervention. It would be a realistic policy option to encourage more tree planting, for example, or institute policies to encourage more air conditoning use during wildfire events.
 
-However, as both of these factors may be associated with other factors on the causal pathway from wildfire to health, it would be important to control for potential confounders.
+However, as both of these variables may be associated with other factors on the causal pathway from wildfire to health, it would be important to control for potential confounding.
 
 ## The need for locally developed health-impact assessment
 
