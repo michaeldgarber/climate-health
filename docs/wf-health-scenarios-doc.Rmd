@@ -30,7 +30,6 @@ library(kableExtra)
 library(knitr)
 source(here("scripts","read-wrangle-eff-estimates.R"))#load measures
 source(here("scripts","data-mgmt-analyses-before-modeling-RD-as-outcome.R"))
-
 ```
 
 Corresponding shiny app: <https://michaeldgarber.shinyapps.io/app-wf-int/>
@@ -166,6 +165,10 @@ The overall approach is as follows:
 
 To inform modeling, we explored the distribution of all variables as well as bivariate associations between tree canopy, air conditioning, the rate difference, and other covariates.
 
+July 9, 2025 note: I'm moving much of this over to a separate markdown doc to create a supplemental word doc
+
+~/Library/CloudStorage/Dropbox/Work/CSU-UCSD post-doc/post-doc-research/climate-health-california/climate-health/docs/supplement.Rmd
+
 ### Univariate distributions
 
 #### Outcome: Rate difference per 100,000 person-days
@@ -175,6 +178,20 @@ To inform modeling, we explored the distribution of all variables as well as biv
 #| warning: false
 #| message: false
 options(scipen=999)
+
+wf_eff_emm_wide %>% 
+  group_by(STATE) %>% 
+  summarise(
+    rd_100k_pt_med=median(rd_100k_quo_pt,na.rm=T),
+    rd_100k_pt_mean_wt=weighted.mean(
+        x=rd_100k_quo_pt,
+        w=pop
+  ),
+    rd_100k_25th= quantile(rd_100k_quo_pt,probs=c(0.25),na.rm=T),
+    rd_100k_75th= quantile(rd_100k_quo_pt,probs=c(0.75),na.rm=T)
+  ) %>% 
+  knitr::kable(digits=3)
+
 
 
 wf_eff_emm_wide %>% 
@@ -186,6 +203,7 @@ wf_eff_emm_wide %>%
         w=pop
   )) %>% 
   knitr::kable(digits=3)
+
 
 
 wf_eff_emm_wide %>% 
@@ -1154,7 +1172,7 @@ rd_100k_diff_pred_pt_tree/rd_100k_diff_pred_pt_ac
 
 ## Selected maps of results
 
-### Tree canopy 
+### Tree canopy
 
 Map of difference in RD per population by ZCTA for the 80th percentile scenario.
 

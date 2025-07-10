@@ -52,7 +52,8 @@ setwd(here("data-processed"))
 load("wf_eff_emm_wide.RData")
 
 wf_eff_emm_wide %>% 
-  group_by(STATE) %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
   summarise(
     rd_100k_pt_med=median(rd_100k_quo_pt,na.rm=T),
     rd_100k_pt_mean_wt=weighted.mean(
@@ -62,18 +63,8 @@ wf_eff_emm_wide %>%
     rd_100k_25th= quantile(rd_100k_quo_pt,probs=c(0.25),na.rm=T),
     rd_100k_75th= quantile(rd_100k_quo_pt,probs=c(0.75),na.rm=T)
   ) %>% 
-  knitr::kable(digits=3)
-
-
-
-wf_eff_emm_wide %>% 
-  group_by(ruca_cat) %>% 
-  summarise(
-    rd_100k_pt_med=median(rd_100k_quo_pt,na.rm=T),
-    rd_100k_pt_mean_wt=weighted.mean(
-        x=rd_100k_quo_pt,
-        w=pop
-  )) %>% 
+  ungroup() %>% 
+  dplyr::select(-overall) %>% 
   knitr::kable(digits=3)
 
 
@@ -94,6 +85,21 @@ wf_eff_emm_wide %>%
 #| warning: false
 #| message: false
 options(scipen=999)
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>%
+  mutate(overall=1) %>% 
+  group_by(overall) %>%
+  summarise(
+    tree_canopy_prop_min=min(tree_canopy_prop,na.rm=T),
+    tree_canopy_prop_max=max(tree_canopy_prop,na.rm=T),
+    tree_canopy_prop_mean=mean(tree_canopy_prop,na.rm=T),
+    tree_canopy_prop_med=median(tree_canopy_prop,na.rm=T)
+  ) %>% 
+  ungroup() %>% 
+  dplyr::select(-overall) %>% 
+  kable(digits=3)
+
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% 
@@ -120,6 +126,21 @@ wf_eff_emm_wide %>%
 #| echo: false
 #| warning: false
 #| message: false
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>%
+  mutate(overall=1) %>% 
+  group_by(overall) %>%
+  summarise(
+    ac_prop_min=min(ac_prop,na.rm=T),
+    ac_prop_max=max(ac_prop,na.rm=T),
+    ac_prop_mean=mean(ac_prop,na.rm=T),
+    ac_prop_med=median(ac_prop,na.rm=T)
+  ) %>% 
+  ungroup() %>% 
+  dplyr::select(-overall) %>% 
+  kable(digits=3)
+
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% 
   ggplot(aes(x=ac_prop))+
@@ -138,6 +159,22 @@ wf_eff_emm_wide %>%
 #| warning: false
 #| message: false
 options(scipen=999)
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>%
+  mutate(overall=1) %>% 
+  group_by(overall) %>%
+  summarise(
+    above_poverty_prop_min=min(above_poverty_prop,na.rm=T),
+    above_poverty_prop_max=max(above_poverty_prop,na.rm=T),
+    above_poverty_prop_mean=mean(above_poverty_prop,na.rm=T),
+    above_poverty_prop_med=median(above_poverty_prop,na.rm=T)
+  ) %>% 
+  ungroup() %>% 
+  dplyr::select(-overall) %>% 
+  kable(digits=2)
+
+
 wf_eff_emm_wide %>% 
   ggplot(aes(x=above_poverty_prop))+
   geom_histogram()+
@@ -150,8 +187,24 @@ wf_eff_emm_wide %>%
 #| echo: false
 #| warning: false
 #| message: false
+
 wf_eff_emm_wide %>% 
-  ggplot(aes(x=above_poverty_prop))+
+  filter(rd_quo_outlier==0) %>%
+  mutate(overall=1) %>% 
+  group_by(overall) %>%
+  summarise(
+    insured_prop_min=min(insured_prop,na.rm=T),
+    insured_prop_max=max(insured_prop,na.rm=T),
+    insured_prop_mean=mean(insured_prop,na.rm=T),
+    insured_prop_med=median(insured_prop,na.rm=T)
+  ) %>% 
+  ungroup() %>% 
+  dplyr::select(-overall) %>% 
+  kable(digits=2)
+
+
+wf_eff_emm_wide %>% 
+  ggplot(aes(x=insured_prop))+
   geom_histogram()+
   theme_bw()+
   labs(x="Proportion with health insurance")
@@ -163,11 +216,23 @@ wf_eff_emm_wide %>%
 #| warning: false
 #| message: false
 library(tmap)
+library(sf)
 setwd(here("data-input","biome-california"))
 load("biomes_14_california.RData")
 setwd(here("data-processed"))
 
-
+biomes_14_california %>% 
+  rename(biome_name=BIOME_NAME) %>% 
+  mutate(
+    area_m2=as.numeric(st_area(geometry)),
+    area_km2=area_m2*1e-6) %>% 
+  st_set_geometry(NULL) %>% 
+  group_by(biome_name) %>% 
+  summarise(area_km2=sum(area_km2,na.rm=T)) %>%
+  arrange(desc(area_km2)) %>% 
+  ungroup() %>% 
+  kable(digits=0,format.args = list(big.mark = ","))
+  
 biomes_14_california %>% 
   rename(biome_name=BIOME_NAME) %>% 
     qtm(
@@ -199,6 +264,22 @@ library(tmap)
 setwd(here("data-processed"))
 load(file="zcta_ruca2010.RData")
 load("zcta_ca_geo_simplified.RData")
+
+zcta_ca_geo_simplified %>% 
+  left_join(zcta_ruca2010,by="zcta") %>% 
+  mutate(
+    area_m2=as.numeric(st_area(geometry)),
+    area_km2=area_m2*1e-6) %>% 
+  st_set_geometry(NULL) %>% 
+  group_by(ruca_cat) %>% 
+  summarise(
+    pop=sum(pop),
+    area_km2=sum(area_km2,na.rm=T)) %>%
+  ungroup() %>% 
+  kable(digits=0,format.args = list(big.mark = ","))
+  
+
+
 zcta_ca_geo_simplified %>% 
   left_join(zcta_ruca2010,by="zcta") %>% 
   qtm(
@@ -524,15 +605,16 @@ The distribution is more negative in more rural areas, suggesting in those areas
 wf_eff_emm_wide %>% 
   group_by(ruca_cat) %>% 
   summarise(
-    n_zcta=n(),
+        n_zcta=n(),
     rd_100k_pt_med=median(rd_100k_quo_pt,na.rm=T),
     rd_100k_pt_mean_wt=weighted.mean(
         x=rd_100k_quo_pt,
         w=pop,
         na.rm=T
-  )
-  ) %>% 
+  )) %>% 
   knitr::kable(digits=3)
+
+
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #
