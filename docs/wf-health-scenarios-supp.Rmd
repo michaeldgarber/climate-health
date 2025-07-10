@@ -293,8 +293,8 @@ zcta_ca_geo_simplified %>%
 
 # Bivariate and stratified associations
 
-## RD x Tree canopy
-
+## RD x Tree canopy x geographic measures
+### RD x Tree canopy
 Here are scatterplots plotting the rate difference against the (square root of) proportion tree canopy.
 
 There is a slight negative association between tree canopy and the RD, but it is rather weak.
@@ -316,10 +316,27 @@ glm_rd_100k_quo_pt_tree_canopy_prop_sqrt=glm(
   weights = rd_quo_weight,
   data = wf_eff_emm_wide_no_outliers
 )
+
 jtools::summ(
   glm_rd_100k_quo_pt_tree_canopy_prop_sqrt,
     model.fit=F, #for brevity in the output, dont' show
   digits=3)
+
+wf_eff_emm_wide_no_outliers %>% 
+  group_by(STATE) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=tree_canopy_prop_sqrt,
+      y=rd_100k_quo_pt,
+      method="spearman"),
+    corr_pearson=cor(
+      x=tree_canopy_prop_sqrt,
+      y=rd_100k_quo_pt,
+      method="pearson")
+  ) %>% 
+  dplyr::select(-STATE) %>% 
+  kable(digits=2)
+
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #
@@ -334,8 +351,49 @@ wf_eff_emm_wide %>%
 ```
 
 
+### RD x Tree canopy x biome
 
-## RD x Tree canopy x rural-urban
+We stratified associations by biome, which illustrates, as above, that the tree-canopy distribution differs starkly by biome. The RD x tree canopy association appears to be negative in Mediterran Forests, Woodlands & Scrub and in Deserts & Xeric shrublands, but slightly positive in the other two.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_biome=glm(
+  rd_100k_quo_pt~tree_canopy_prop_sqrt +biome_name_freq +
+    biome_name_freq*tree_canopy_prop_sqrt,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_biome,
+  model.fit=F, #for brevity in the output, dont' show
+             digits=3)
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(x=tree_canopy_prop_sqrt, y=rd_100k_quo_pt))+
+  geom_point()+
+  facet_grid(
+    rows="biome_name_freq",
+    labeller = label_wrap_gen(20)#wrap text!
+  )+
+  geom_smooth(method="lm")+
+  theme_bw()+
+    labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion tree canopy (square root)"
+    )+
+  #see here:
+  #https://ggplot2.tidyverse.org/reference/facet_grid.html
+   theme(strip.text.y = element_text(angle = 0))
+```
+
+
+
+### RD x Tree canopy x rural-urban
 
 We also stratified this association by urban-rural category.
 
@@ -374,48 +432,10 @@ wf_eff_emm_wide %>%
 
 
 
-## RD x Tree canopy x biome
 
-We also stratified by biome, which illustrates, as above, that the tree-canopy distribution differs starkly by biome. The RD x tree canopy association appears to be negative in Mediterran Forests, Woodlands & Scrub and in Deserts & Xeric shrublands, but slightly positive in the other two.
+## RD x A/C x geographic measures
 
-```{r}
-#| echo: false
-#| warning: false
-#| message: false
-glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_biome=glm(
-  rd_100k_quo_pt~tree_canopy_prop_sqrt +biome_name_freq +
-    biome_name_freq*tree_canopy_prop_sqrt,
-  family = gaussian,
-  na.action = "na.exclude", 
-  weights = rd_quo_weight,
-  data = wf_eff_emm_wide_no_outliers
-)
-jtools::summ(
-  glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_biome,
-  model.fit=F, #for brevity in the output, dont' show
-             digits=3)
-
-wf_eff_emm_wide %>% 
-  filter(rd_quo_outlier==0) %>% 
-  ggplot(aes(x=tree_canopy_prop_sqrt, y=rd_100k_quo_pt))+
-  geom_point()+
-  facet_grid(
-    rows="biome_name_freq",
-    labeller = label_wrap_gen(20)#wrap text!
-  )+
-  geom_smooth(method="lm")+
-  theme_bw()+
-    labs(
-    y="Rate difference per 100,000 person-days",
-    x="Proportion tree canopy (square root)"
-    )+
-  #see here:
-  #https://ggplot2.tidyverse.org/reference/facet_grid.html
-   theme(strip.text.y = element_text(angle = 0))
-```
-
-## RD x A/C
-
+### RD x A/C
 The association with air conditioning is weakly negative.
 
 ```{r}
@@ -434,6 +454,24 @@ jtools::summ(
     model.fit=F, #for brevity in the output, dont' show
   digits=3)
 
+wf_eff_emm_wide_no_outliers %>% 
+  group_by(STATE) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=ac_prop,
+      y=rd_100k_quo_pt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=ac_prop,
+      y=rd_100k_quo_pt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  dplyr::select(-STATE) %>% 
+  kable(digits=2)
+
+
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #
@@ -447,42 +485,7 @@ wf_eff_emm_wide %>%
   )
 ```
 
-## RD x A/C x rural-urban
-
-Like with tree canopy, the RD x A/C association varies by rural-urban category. It is more negative in more populous areas, and positive–suggesting air conditioning is associated with a **higher** difference effect of wildfire on acute-care utilization in less populous areas.
-
-```{r}
-#| echo: false
-#| warning: false
-#| message: false
-glm_rd_100k_quo_pt_ac_prop_int_ruca_cat=glm(
-  rd_100k_quo_pt~ac_prop + ruca_cat +ruca_cat*ac_prop,
-  family = gaussian,
-  na.action = "na.exclude", 
-  weights = rd_quo_weight,
-  data = wf_eff_emm_wide_no_outliers
-)
-jtools::summ(
-  glm_rd_100k_quo_pt_ac_prop_int_ruca_cat,
-      model.fit=F, #for brevity in the output, dont' show
-  digits=3)
-
-wf_eff_emm_wide %>% 
-  filter(rd_quo_outlier==0) %>% #remove values above the 99th percentile and below the 1st
-  ggplot(aes(x=ac_prop, y=rd_100k_quo_pt))+
-  geom_point()+
-  facet_grid(
-    rows="ruca_cat"
-  )+
-  geom_smooth(method="lm")+
-  theme_bw()+
-    labs(
-    y="Rate difference per 100,000 person-days",
-    x="Proportion with air conditioning"
-    )
-```
-
-## RD x A/C x biome
+### RD x A/C x biome
 
 ```{r}
 #| echo: false
@@ -519,7 +522,47 @@ wf_eff_emm_wide %>%
    theme(strip.text.y = element_text(angle = 0))
 ```
 
-## RD x proportion above poverty
+
+### RD x A/C x rural-urban
+
+Like with tree canopy, the RD x A/C association varies by rural-urban category. It is more negative in more populous areas, and positive–suggesting air conditioning is associated with a **higher** difference effect of wildfire on acute-care utilization in less populous areas.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+glm_rd_100k_quo_pt_ac_prop_int_ruca_cat=glm(
+  rd_100k_quo_pt~ac_prop + ruca_cat +ruca_cat*ac_prop,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_ac_prop_int_ruca_cat,
+      model.fit=F, #for brevity in the output, dont' show
+  digits=3)
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #remove values above the 99th percentile and below the 1st
+  ggplot(aes(x=ac_prop, y=rd_100k_quo_pt))+
+  geom_point()+
+  facet_grid(
+    rows="ruca_cat"
+  )+
+  geom_smooth(method="lm")+
+  theme_bw()+
+    labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion with air conditioning"
+    )
+```
+
+
+
+## RD x socio-demographic and geographic measures
+
+### RD x proportion above poverty
 
 ```{r}
 #| echo: false
@@ -537,27 +580,27 @@ wf_eff_emm_wide %>%
   )
 ```
 
-## RD x proportion insured
-
+### RD x proportion insured
 The association between the RD and proportion with insurance is stronger than that between proportion above poverty.
-
 ```{r}
 #| echo: false
 #| warning: false
 #| message: false
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #
-  ggplot(aes(x=insured_prop, y=rd_100k_quo_pt))+
+  ggplot(aes(x=above_poverty_prop, y=rd_100k_quo_pt))+
   geom_point()+
   geom_smooth()+
   theme_bw()+
   labs(
     y="Rate difference per 100,000 person-days",
-    x="Proportion insured"
+    x="Proportion above poverty"
   )
 ```
 
-## RD x biome
+
+
+### RD x biome
 
 The RD distribution is in the positive direction in **Mediterranean Forests, Woodlands & Scrub** and more negative in all the others.
 
@@ -593,7 +636,7 @@ wf_eff_emm_wide %>%
    scale_x_discrete(labels = scales::label_wrap(10))
 ```
 
-## RD x urban-rural category
+### RD x urban-rural category
 
 The distribution is more negative in more rural areas, suggesting in those areas, wildfires had a **preventive** effect on healthcare utilization
 
@@ -629,4 +672,136 @@ wf_eff_emm_wide %>%
 #  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
    scale_x_discrete(labels = scales::label_wrap(10))
 ```
+
+## Tree canopy and AC x socio-demographic measures
+### Proportion above poverty x tree canopy
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=above_poverty_prop, y=tree_canopy_prop_sqrt))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion above poverty",
+    y="Proportion tree canopy (square root)"
+  )
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=above_poverty_prop, y=tree_canopy_prop_sqrt))+
+  geom_point()+
+  facet_grid(
+    rows="biome_name_freq",
+    labeller = label_wrap_gen(20)#wrap text!
+  )+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion above poverty",
+    y="Proportion tree canopy (square root)"
+  )
+```
+
+### Proportion insured x tree canopy
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=insured_prop, y=tree_canopy_prop_sqrt))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion insured",
+    y="Proportion tree canopy (square root)"
+  )
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=insured_prop, y=tree_canopy_prop_sqrt))+
+  geom_point()+
+  facet_grid(
+    rows="biome_name_freq",
+    labeller = label_wrap_gen(20)#wrap text!
+  )+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion insured",
+    y="Proportion tree canopy (square root)"
+  )
+```
+
+### Proportion above poverty x A/C
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=above_poverty_prop, y=ac_prop))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion above poverty",
+    y="Proportion with A/C"
+  )
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=above_poverty_prop, y=ac_prop))+
+  geom_point()+
+  facet_grid(
+    rows="biome_name_freq",
+    labeller = label_wrap_gen(20)#wrap text!
+  )+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion above poverty",
+    y="Proportion with A/C"
+  )
+```
+
+### Proportion insured x A/C
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=insured_prop, y=ac_prop))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion insured",
+    y="Proportion with A/C"
+  )
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=insured_prop, y=ac_prop))+
+  geom_point()+
+  facet_grid(
+    rows="biome_name_freq",
+    labeller = label_wrap_gen(20)#wrap text!
+  )+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion insured",
+    y="Proportion with A/C"
+  )
+```
+
+
+
 
