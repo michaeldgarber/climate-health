@@ -588,13 +588,13 @@ The association between the RD and proportion with insurance is stronger than th
 #| message: false
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #
-  ggplot(aes(x=above_poverty_prop, y=rd_100k_quo_pt))+
+  ggplot(aes(x=insured_prop, y=rd_100k_quo_pt))+
   geom_point()+
   geom_smooth()+
   theme_bw()+
   labs(
     y="Rate difference per 100,000 person-days",
-    x="Proportion above poverty"
+    x="Proportion with insurance"
   )
 ```
 
