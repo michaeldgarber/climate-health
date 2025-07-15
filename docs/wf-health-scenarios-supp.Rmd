@@ -361,19 +361,6 @@ We stratified associations by biome, which illustrates, as above, that the tree-
 #| echo: false
 #| warning: false
 #| message: false
-glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_biome=glm(
-  rd_100k_quo_pt~tree_canopy_prop_sqrt +biome_name_freq +
-    biome_name_freq*tree_canopy_prop_sqrt,
-  family = gaussian,
-  na.action = "na.exclude", 
-  weights = rd_quo_weight,
-  data = wf_eff_emm_wide_no_outliers
-)
-jtools::summ(
-  glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_biome,
-  model.fit=F, #for brevity in the output, dont' show
-             digits=3)
-
 wf_eff_emm_wide_no_outliers %>% 
   group_by(biome_name_freq) %>% 
   summarise(
@@ -387,6 +374,26 @@ wf_eff_emm_wide_no_outliers %>%
       method="pearson")
   ) %>% 
   kable(digits=2)
+```
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_biome=glm(
+  rd_100k_quo_pt~tree_canopy_prop_sqrt +biome_name_freq +
+    biome_name_freq*tree_canopy_prop_sqrt,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_biome,
+  model.fit=F, #for brevity in the output, dont' show
+             digits=3)
+
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% 
@@ -419,17 +426,6 @@ The stratified scatterplot suggests that in the most urban areas and in the leas
 #| echo: false
 #| warning: false
 #| message: false
-glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_ruca_cat=glm(
-  rd_100k_quo_pt~tree_canopy_prop_sqrt + ruca_cat +ruca_cat*tree_canopy_prop_sqrt,
-  family = gaussian,
-  na.action = "na.exclude", 
-  weights = rd_quo_weight,
-  data = wf_eff_emm_wide_no_outliers
-)
-jtools::summ(
-  glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_ruca_cat,
-      model.fit=F, #for brevity in the output, dont' show
-  digits=3)
 
 wf_eff_emm_wide_no_outliers %>% 
   group_by(ruca_cat) %>% 
@@ -444,6 +440,26 @@ wf_eff_emm_wide_no_outliers %>%
       method="pearson")
   ) %>% 
   kable(digits=2)
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_ruca_cat=glm(
+  rd_100k_quo_pt~tree_canopy_prop_sqrt + ruca_cat +ruca_cat*tree_canopy_prop_sqrt,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_ruca_cat,
+      model.fit=F, #for brevity in the output, dont' show
+  digits=3)
+
+
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #remove values above the 99th percentile and below the 1st
@@ -521,18 +537,6 @@ wf_eff_emm_wide %>%
 #| echo: false
 #| warning: false
 #| message: false
-glm_rd_100k_quo_pt_ac_prop_int_biome=glm(
-  rd_100k_quo_pt~ac_prop + biome_name_freq +biome_name_freq*ac_prop,
-  family = gaussian,
-  na.action = "na.exclude", 
-  weights = rd_quo_weight,
-  data = wf_eff_emm_wide_no_outliers
-)
-jtools::summ(
-  glm_rd_100k_quo_pt_ac_prop_int_biome,
-      model.fit=F, #for brevity in the output, dont' show
-  digits=3)
-
 wf_eff_emm_wide_no_outliers %>% 
   group_by(biome_name_freq) %>% 
   summarise(
@@ -548,6 +552,26 @@ wf_eff_emm_wide_no_outliers %>%
       use="complete.obs")
   ) %>% 
   kable(digits=2)
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+glm_rd_100k_quo_pt_ac_prop_int_biome=glm(
+  rd_100k_quo_pt~ac_prop + biome_name_freq +biome_name_freq*ac_prop,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_ac_prop_int_biome,
+      model.fit=F, #for brevity in the output, dont' show
+  digits=3)
+
+
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% 
@@ -577,18 +601,6 @@ Like with tree canopy, the RD x A/C association varies by rural-urban category. 
 #| echo: false
 #| warning: false
 #| message: false
-glm_rd_100k_quo_pt_ac_prop_int_ruca_cat=glm(
-  rd_100k_quo_pt~ac_prop + ruca_cat +ruca_cat*ac_prop,
-  family = gaussian,
-  na.action = "na.exclude", 
-  weights = rd_quo_weight,
-  data = wf_eff_emm_wide_no_outliers
-)
-jtools::summ(
-  glm_rd_100k_quo_pt_ac_prop_int_ruca_cat,
-      model.fit=F, #for brevity in the output, dont' show
-  digits=3)
-
 wf_eff_emm_wide_no_outliers %>% 
   group_by(ruca_cat) %>% 
   summarise(
@@ -604,6 +616,24 @@ wf_eff_emm_wide_no_outliers %>%
       use="complete.obs")
   ) %>% 
   kable(digits=2)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+glm_rd_100k_quo_pt_ac_prop_int_ruca_cat=glm(
+  rd_100k_quo_pt~ac_prop + ruca_cat +ruca_cat*ac_prop,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_ac_prop_int_ruca_cat,
+      model.fit=F, #for brevity in the output, dont' show
+  digits=3)
+
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #remove values above the 99th percentile and below the 1st
