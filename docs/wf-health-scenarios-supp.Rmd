@@ -338,6 +338,8 @@ wf_eff_emm_wide_no_outliers %>%
   kable(digits=2)
 
 
+
+
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #
   ggplot(aes(x=tree_canopy_prop_sqrt, y=rd_100k_quo_pt))+
@@ -371,6 +373,20 @@ jtools::summ(
   glm_rd_100k_quo_pt_tree_canopy_prop_sqrt_int_biome,
   model.fit=F, #for brevity in the output, dont' show
              digits=3)
+
+wf_eff_emm_wide_no_outliers %>% 
+  group_by(biome_name_freq) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=tree_canopy_prop_sqrt,
+      y=rd_100k_quo_pt,
+      method="spearman"),
+    corr_pearson=cor(
+      x=tree_canopy_prop_sqrt,
+      y=rd_100k_quo_pt,
+      method="pearson")
+  ) %>% 
+  kable(digits=2)
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% 
@@ -415,6 +431,20 @@ jtools::summ(
       model.fit=F, #for brevity in the output, dont' show
   digits=3)
 
+wf_eff_emm_wide_no_outliers %>% 
+  group_by(ruca_cat) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=tree_canopy_prop_sqrt,
+      y=rd_100k_quo_pt,
+      method="spearman"),
+    corr_pearson=cor(
+      x=tree_canopy_prop_sqrt,
+      y=rd_100k_quo_pt,
+      method="pearson")
+  ) %>% 
+  kable(digits=2)
+
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #remove values above the 99th percentile and below the 1st
   ggplot(aes(x=tree_canopy_prop_sqrt, y=rd_100k_quo_pt))+
@@ -455,7 +485,8 @@ jtools::summ(
   digits=3)
 
 wf_eff_emm_wide_no_outliers %>% 
-  group_by(STATE) %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
   summarise(
     corr_spearman=cor(
       x=ac_prop,
@@ -468,7 +499,6 @@ wf_eff_emm_wide_no_outliers %>%
       method="pearson",
       use="complete.obs")
   ) %>% 
-  dplyr::select(-STATE) %>% 
   kable(digits=2)
 
 
@@ -502,6 +532,22 @@ jtools::summ(
   glm_rd_100k_quo_pt_ac_prop_int_biome,
       model.fit=F, #for brevity in the output, dont' show
   digits=3)
+
+wf_eff_emm_wide_no_outliers %>% 
+  group_by(biome_name_freq) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=ac_prop,
+      y=rd_100k_quo_pt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=ac_prop,
+      y=rd_100k_quo_pt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% 
@@ -543,6 +589,22 @@ jtools::summ(
       model.fit=F, #for brevity in the output, dont' show
   digits=3)
 
+wf_eff_emm_wide_no_outliers %>% 
+  group_by(ruca_cat) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=ac_prop,
+      y=rd_100k_quo_pt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=ac_prop,
+      y=rd_100k_quo_pt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
+
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #remove values above the 99th percentile and below the 1st
   ggplot(aes(x=ac_prop, y=rd_100k_quo_pt))+
@@ -560,9 +622,9 @@ wf_eff_emm_wide %>%
 
 
 
-## RD x socio-demographic and geographic measures
+## RD x community characteristics
 
-### RD x proportion above poverty
+### RD x prop. above poverty
 
 ```{r}
 #| echo: false
@@ -572,15 +634,33 @@ wf_eff_emm_wide %>%
   filter(rd_quo_outlier==0) %>% #
   ggplot(aes(x=above_poverty_prop, y=rd_100k_quo_pt))+
   geom_point()+
-  geom_smooth()+
+  geom_smooth(method="lm")+
   theme_bw()+
   labs(
     y="Rate difference per 100,000 person-days",
     x="Proportion above poverty"
   )
+
+wf_eff_emm_wide_no_outliers %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=above_poverty_prop,
+      y=rd_100k_quo_pt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=above_poverty_prop,
+      y=rd_100k_quo_pt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
+
 ```
 
-### RD x proportion insured
+### RD x prop. insured
 The association between the RD and proportion with insurance is stronger than that between proportion above poverty.
 ```{r}
 #| echo: false
@@ -590,12 +670,29 @@ wf_eff_emm_wide %>%
   filter(rd_quo_outlier==0) %>% #
   ggplot(aes(x=insured_prop, y=rd_100k_quo_pt))+
   geom_point()+
-  geom_smooth()+
+  geom_smooth(method="lm")+
   theme_bw()+
   labs(
     y="Rate difference per 100,000 person-days",
     x="Proportion with insurance"
   )
+
+wf_eff_emm_wide_no_outliers %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=insured_prop,
+      y=rd_100k_quo_pt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=insured_prop,
+      y=rd_100k_quo_pt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
 ```
 
 
@@ -612,7 +709,7 @@ The RD distribution is in the positive direction in **Mediterranean Forests, Woo
 wf_eff_emm_wide %>% 
   group_by(biome_name_freq) %>% 
   summarise(
-        n_zcta=n(),
+    n_zcta=n(),
     rd_100k_pt_med=median(rd_100k_quo_pt,na.rm=T),
     rd_100k_pt_mean_wt=weighted.mean(
         x=rd_100k_quo_pt,
@@ -648,7 +745,7 @@ The distribution is more negative in more rural areas, suggesting in those areas
 wf_eff_emm_wide %>% 
   group_by(ruca_cat) %>% 
   summarise(
-        n_zcta=n(),
+    n_zcta=n(),
     rd_100k_pt_med=median(rd_100k_quo_pt,na.rm=T),
     rd_100k_pt_mean_wt=weighted.mean(
         x=rd_100k_quo_pt,
@@ -673,8 +770,9 @@ wf_eff_emm_wide %>%
    scale_x_discrete(labels = scales::label_wrap(10))
 ```
 
-## Tree canopy and AC x socio-demographic measures
-### Proportion above poverty x tree canopy
+## Tree canopy and AC x community characteristics
+### Tree canopy
+#### Tree canopy x prop. above poverty
 ```{r}
 #| echo: false
 #| warning: false
@@ -683,30 +781,66 @@ wf_eff_emm_wide %>%
   filter(rd_quo_outlier==0) %>% #
   ggplot(aes(x=above_poverty_prop, y=tree_canopy_prop_sqrt))+
   geom_point()+
-  geom_smooth()+
+  geom_smooth(method="lm")+
   theme_bw()+
   labs(
     x="Proportion above poverty",
     y="Proportion tree canopy (square root)"
   )
+
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #
   ggplot(aes(x=above_poverty_prop, y=tree_canopy_prop_sqrt))+
   geom_point()+
+  geom_smooth(method="lm")+
   facet_grid(
     rows="biome_name_freq",
     labeller = label_wrap_gen(20)#wrap text!
   )+
-  geom_smooth()+
   theme_bw()+
   labs(
     x="Proportion above poverty",
     y="Proportion tree canopy (square root)"
   )
+
+wf_eff_emm_wide_no_outliers %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=above_poverty_prop,
+      y=tree_canopy_prop_sqrt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=above_poverty_prop,
+      y=tree_canopy_prop_sqrt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
+
+wf_eff_emm_wide_no_outliers %>% 
+  group_by(biome_name_freq) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=above_poverty_prop,
+      y=tree_canopy_prop_sqrt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=above_poverty_prop,
+      y=tree_canopy_prop_sqrt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
+
+
 ```
 
-### Proportion insured x tree canopy
+#### Tree canopy x prop. insured
 ```{r}
 #| echo: false
 #| warning: false
@@ -715,30 +849,106 @@ wf_eff_emm_wide %>%
   filter(rd_quo_outlier==0) %>% #
   ggplot(aes(x=insured_prop, y=tree_canopy_prop_sqrt))+
   geom_point()+
-  geom_smooth()+
+  geom_smooth(method="lm")+
   theme_bw()+
   labs(
     x="Proportion insured",
     y="Proportion tree canopy (square root)"
   )
 
+#by biome
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #
   ggplot(aes(x=insured_prop, y=tree_canopy_prop_sqrt))+
   geom_point()+
+  geom_smooth(method="lm")+
   facet_grid(
     rows="biome_name_freq",
     labeller = label_wrap_gen(20)#wrap text!
   )+
-  geom_smooth()+
   theme_bw()+
   labs(
     x="Proportion insured",
     y="Proportion tree canopy (square root)"
   )
+
+
+wf_eff_emm_wide_no_outliers %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=insured_prop,
+      y=tree_canopy_prop_sqrt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=insured_prop,
+      y=tree_canopy_prop_sqrt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
+
+wf_eff_emm_wide_no_outliers %>% 
+  group_by(biome_name_freq) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=insured_prop,
+      y=tree_canopy_prop_sqrt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=insured_prop,
+      y=tree_canopy_prop_sqrt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
+
 ```
 
-### Proportion above poverty x A/C
+#### Tree canopy x biome
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=biome_name_freq, y=tree_canopy_prop))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Tree canopy",
+    x="Biome"
+  )+
+  #see
+#  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+#### Tree canopy x rural-urban
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=ruca_cat, y=tree_canopy_prop))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Tree canopy",
+    x="Rural-urban category"
+  )+
+  #see
+#  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+
+### A/C
+#### A/C x prop. above poverty
 ```{r}
 #| echo: false
 #| warning: false
@@ -747,30 +957,65 @@ wf_eff_emm_wide %>%
   filter(rd_quo_outlier==0) %>% #
   ggplot(aes(x=above_poverty_prop, y=ac_prop))+
   geom_point()+
-  geom_smooth()+
+  geom_smooth(method="lm")+
   theme_bw()+
   labs(
     x="Proportion above poverty",
     y="Proportion with A/C"
   )
 
+#by biome
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #
   ggplot(aes(x=above_poverty_prop, y=ac_prop))+
   geom_point()+
+  geom_smooth(method="lm")+
   facet_grid(
     rows="biome_name_freq",
     labeller = label_wrap_gen(20)#wrap text!
   )+
-  geom_smooth()+
   theme_bw()+
   labs(
     x="Proportion above poverty",
     y="Proportion with A/C"
   )
+
+wf_eff_emm_wide_no_outliers %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=above_poverty_prop,
+      y=ac_prop,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=above_poverty_prop,
+      y=ac_prop,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
+
+wf_eff_emm_wide_no_outliers %>% 
+  group_by(biome_name_freq) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=above_poverty_prop,
+      y=ac_prop,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=above_poverty_prop,
+      y=ac_prop,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
+
 ```
 
-### Proportion insured x A/C
+#### A/C x prop. insured
 ```{r}
 #| echo: false
 #| warning: false
@@ -779,29 +1024,85 @@ wf_eff_emm_wide %>%
   filter(rd_quo_outlier==0) %>% #
   ggplot(aes(x=insured_prop, y=ac_prop))+
   geom_point()+
-  geom_smooth()+
+  geom_smooth(method="lm")+
   theme_bw()+
   labs(
     x="Proportion insured",
     y="Proportion with A/C"
   )
 
-wf_eff_emm_wide %>% 
-  filter(rd_quo_outlier==0) %>% #
-  ggplot(aes(x=insured_prop, y=ac_prop))+
-  geom_point()+
-  facet_grid(
-    rows="biome_name_freq",
-    labeller = label_wrap_gen(20)#wrap text!
-  )+
-  geom_smooth()+
-  theme_bw()+
-  labs(
-    x="Proportion insured",
-    y="Proportion with A/C"
-  )
+wf_eff_emm_wide_no_outliers %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=insured_prop,
+      y=ac_prop,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=insured_prop,
+      y=ac_prop,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
+
+wf_eff_emm_wide_no_outliers %>% 
+  group_by(biome_name_freq) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=insured_prop,
+      y=ac_prop,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=insured_prop,
+      y=ac_prop,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  kable(digits=2)
+
 ```
 
+#### A/C x biome
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=biome_name_freq, y=ac_prop))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="A/C",
+    x="Biome"
+  )+
+  #see
+#  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+#### A/C x rural-urban
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=ruca_cat, y=ac_prop))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="A/C",
+    x="Rural-urban category"
+  )+
+  #see
+#  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
 
 
 
