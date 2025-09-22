@@ -2,7 +2,7 @@ This repository contains scripts and documents for a project titled
 
 **Simulating how tree canopy and air conditioning may modify effects of wildfire on healthcare utilization: a locally tailored health-impact assessment**
 
-A description of the data pipeline: link-tbd
+A description of the data pipeline: <https://michaeldgarber.github.io/climate-health/describe-code-pipeline>
 
 Preliminary report: <https://michaeldgarber.github.io/climate-health/wf-health-scenarios-doc.html>
 

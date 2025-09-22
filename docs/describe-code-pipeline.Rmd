@@ -12,13 +12,17 @@ By Michael Garber
 
 Revised September 22, 2025
 
+URL of this page: <https://michaeldgarber.github.io/climate-health/describe-code-pipeline>
+
+Corresponding GitHub repository: <https://github.com/michaeldgarber/climate-health/tree/main>
+
 # Overview
 
 For an overview of the project, please see here:
 
 <https://michaeldgarber.github.io/climate-health/wf-health-scenarios-doc.html>
 
-This document describes code that produces the results. The code files are located in the scripts folder of this repository. The three R scripts to run this analysis are the following:
+This document describes code that produces the results. The code files are located in the [scripts](https://github.com/michaeldgarber/climate-health/tree/main/scripts) folder of this repository: <https://github.com/michaeldgarber/climate-health/tree/main>. The three R scripts to run this analysis are the following:
 
 1.  **`data-mgmt-analyses-before-modeling-RD-as-outcome.R`** This code loads data from various folders, combines the data together, and creates some new variables. It also explores the data with plots and maps
 2.  **`model-RD-as-outcome.R`** Fit models for effect of intervention variables on the rate difference.
@@ -26,7 +30,7 @@ This document describes code that produces the results. The code files are locat
 
 To quickly run all three scripts in one file, this code may be used: **source-scripts-general-eff-mod.R** It "sources" all three scripts.
 
-# Specifics of what each script does
+# What each script does in more detail
 
 ## 1. Import and read data
 
