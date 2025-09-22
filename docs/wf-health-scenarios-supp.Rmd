@@ -42,6 +42,7 @@ library(knitr)
 # Univariate distributions
 
 ## Outcome: Rate difference per 100,000 person-days
+A positive rate difference indicates that wildfire is causing hospitalizations, and a negative value implies wildfire is preventing them.
 
 ```{r}
 #| echo: false
