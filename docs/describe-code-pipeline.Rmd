@@ -1,0 +1,109 @@
+---
+title: "Description of code pipeline"
+output: 
+  html_document:
+    toc: true
+    toc_float:
+      toc_collapsed: true
+    toc_depth: 3
+---
+
+By Michael Garber
+
+Revised September 22, 2025
+
+# Overview
+
+For an overview of the project, please see here:
+
+<https://michaeldgarber.github.io/climate-health/wf-health-scenarios-doc.html>
+
+This document describes code that produces the results. The code files are located in the scripts folder of this repository. The three R scripts to run this analysis are the following:
+
+1.  **`data-mgmt-analyses-before-modeling-RD-as-outcome.R`** This code loads data from various folders, combines the data together, and creates some new variables. It also explores the data with plots and maps
+2.  **`model-RD-as-outcome.R`** Fit models for effect of intervention variables on the rate difference.
+3.  **`predict-values-alt-tree-ac.R`** Define scenarios and predict alternative values of RD based on scenario values and models from Step 2.
+
+To quickly run all three scripts in one file, this code may be used: **source-scripts-general-eff-mod.R** It "sources" all three scripts.
+
+# Specifics of what each script does
+
+## 1. Import and read data
+
+**The script:** `data-mgmt-analyses-before-modeling-RD-as-outcome.R`
+
+**What it does:** The purpose of this code is to read in data on the spatially varying estimates of the effect of wildfire on hospitalizations along with covariates and to create a unified dataset that will be used for the modeling step at the ZCTA level. Note I use zip code interchangeably with ZCTA here.
+
+**Data used:** The code begins by reading in information from various sources. Specifically, data include:
+
+-   Effect estimates relating wildfire days with hospitalizations from [Do et al (2024)](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2023GH000997). Measures are the rate difference along with its corresponding standard deviation.
+
+-   Various zip-code-level demographic variables, some of which are included in the .csv file shared by authors of the Do et al. article. Other covariates are gathered directly from the [Healthy Places Index](https://api.healthyplacesindex.org) of the Public Health Alliance of Southern California
+
+-   Each zip code's biome
+
+-   Each zip code's rural-urban commuting code
+
+-   Each zip code's level of impervious surfaces
+
+-   Each zip code's air basin
+
+**Processing:** It then links all of the information together at the zip-code level using `dplyr::left_join()`
+
+**Quality checks and data exploration:** The code subsequently creates maps and plots to assess univariate distributions of the variables along with bivariate distributions to assess how variables relate to one another. These checks are performed to gain a better understanding of the data and to inform modeling.
+
+**Outputs:** The code has two important outputs:
+
+-   **wf_eff_emm_wide.R** This is the final zip-code-level dataset with the above information linked together
+
+-   **wf_eff_emm_wide_no_outliers** The same dataset removing observations containing outliers for the rate difference
+
+## 2. Model the rate difference as the outcome
+
+**The script:** **`model-RD-as-outcome.R`**
+
+**What it does:** The purpose of this code is to model the spatially varying rate difference (RD) at the ZCTA level using the unified dataset created previously. It fits a series of weighted Guassian generalized lienar models to estimate how the RD varies as a function of the intervention constructs of interest —either tree canopy or air conditioning— along with covariates we expect may confound the effect of these intervention variables and the outcome.
+
+**Modeling approach:**
+
+**Covariates:** For both tree canopy and air conditioning, we tried various models to both control for confounding for the association between the RD and the intervention variable of interest while keeping the models relatively parsimonious. For each model, in addition to include the intervention of interest in the model (either tree canopy or air conditioning), we included the following covariates:
+
+-   proportion insured
+
+-   rural-urban category
+
+-   biome, and
+
+-   two interaction terms
+
+    -   square root of tree canopy times the rural-urban category
+
+    -   square root of tree canopy times biome.
+
+**Weighting:** Considering the model outcome is itself a modeled result (with a point estimate and a standard error), we we used weighted regression to weight observations (ZCTAs) with more precise estimates more highly. The weight variable is `rd_quo_weight`. It is defined in the previous code as `rd_quo_weight= rd_quo_sd_min/rd_quo_sd` , where the denominator is the standard deviation for the modeled RD in that ZCTA and the numerator is the minimum SD over all ZCTAS. This way, the ZCTA with. The values with higher SDs will receive lower weights.
+
+The final glm model objects for tree canopy and air-conditioning, respectively, are:
+
+-   **For tree canopy as the intervention:** glm_rd_tree_conf_ins_ruca_biome_int_ruca_biome
+
+-   **For air conditioning as the intervention:** glm_rd_ac_conf_ins_ruca_biome_int_ruca_biome
+
+**Output:** This script does not save any output to disc. It can be run relatively quickly. Its outputs (the model results) are used in the next script.
+
+## 3. Predict alternative rate differences under various scenarios
+
+**The script:**
+
+What it does in detail
+
+# Other scripts
+
+The above sequence of scripts will work assuming all of the data are available locally on the computer in the locations specified by the relative paths, as indicated in the statements setting the working directory using the **here()** package. For example, the code above expects to find the R object, `zcta_ca_biome_highest.R`, in the "data-processed" folder one level beneath the directory corresponding to the R project, the folder name of which is "climate-health."
+
+These code files explain and gather data from various publicly available sources. As spatial data can be more time consuming to gather, I don't run these scripts every time. Instead, I have saved the relevant information to create aspatial zip-code-level look-up tables that are joined with the main effect-estimate data in **data-mgmt-analyses-before-modeling-RD-as-outcome.R**.
+
+-   **get-zcta-california-geo.R** This code uses tidycensus and other functions to read in publicly available geometry data for zip codes in the State of California. It also reads in zip-code-level lookup tables for **rural-urban** commuting codes.
+
+-   **link-zctas-biome.R** This code links Zip codes with biomes.
+
+-   **california-air-basins-merge-w-zctas.R** This code reads in data on air basin and merges with the zip-code geometry.

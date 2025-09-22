@@ -1,5 +1,5 @@
 #Continued from
-source(here("scripts","data-mgmt-analyses-before-modeling-RD-as-outcome.R"))
+#source(here("scripts","data-mgmt-analyses-before-modeling-RD-as-outcome.R"))
 
 # Fit models-------
 ## AC---------
@@ -75,14 +75,13 @@ glm_rd_e_tree_ac_prop_conf_int_ruca =glm(
 
 summary(glm_rd_e_tree_ac_prop_conf_int_ruca)
 
-### AC final model------
 #what if we use the same final
 #model for AC as we use for tree can. below?
 #Include biome here as well, as ac can vary by biome,
 #and we're not going to change biome
 glm_rd_ac_conf_ins_biome_int_ruca =glm(
   rd_quo_pt~ac_prop +insured_prop + ruca_cat + biome_name_freq+
-#    above_poverty_prop +
+    #    above_poverty_prop +
     ac_prop*ruca_cat,
   family = gaussian,
   na.action = "na.exclude", 
@@ -91,7 +90,9 @@ glm_rd_ac_conf_ins_biome_int_ruca =glm(
 )
 summary(glm_rd_ac_conf_ins_biome_int_ruca)
 
-#Tarik suggested interaction by biome as well
+
+### AC final model------
+#The final model is one that includes an interaction between biome as well
 glm_rd_ac_conf_ins_ruca_biome_int_ruca_biome =glm(
   rd_quo_pt~ac_prop +insured_prop + ruca_cat +
     biome_name_freq+
@@ -239,8 +240,6 @@ glm_rd_tree_conf_int_ruca =glm(
 #and also, curiously, strong in rural areas
 summary(glm_rd_tree_conf_int_ruca)
 
-
-### tree canopy - final model-----
 ## final tree canopy model after consideration of above
 #Use insurance as a confounder. Stratifiy by RUCA
 #also include biome probably, so the effect of tree canopy
@@ -262,6 +261,10 @@ summary(wf_eff_emm_wide_no_outliers$tree_canopy_prop_sqrt)
 #-1.7280
 #That means. for a one-unit increase in the square root of tree
 #canopy, the RD goes down -1.7
+
+
+### tree canopy - final model-----
+
 
 #May 23, 2025:
 #Tarik's thought to add biome as well as an interaction term, allowing

@@ -1,4 +1,4 @@
-#data-mgmt-analyses-before-modeling
+#Filenmae: data-mgmt-analyses-before-modeling-RD-as-outcome.R
 
 #Revised May 16, 2025
 #Revised May 21, 2025
@@ -27,7 +27,8 @@ setwd(here("data-processed"))
 load("lookup_pop_zcta.RData")
 
 lookup_pop_zcta
-#make the data wide form for the model, rather than long-form, which I have done here
+#make the data wide form for the model, rather than long-form, 
+#which I have done here
 #climate-health/scripts/read-wrangle-eff-estimates.R
 
 #and read in RUCA data as well
@@ -166,10 +167,10 @@ wf_eff_emm_wide=read_csv("hpi3_data_for_meta_figure6.csv") %>%
     #for the model, let's create weights as the inverse of the modeled SD
     #what's the smallest standard deviation?
     rd_quo_sd_min=min(rd_quo_sd,na.rm=T),
-    #divide the minimum by each SD. Higher values are less precise
+    #divide the minimum by each SD. Higher values are less precise.
     rd_quo_sd_min_prop=rd_quo_sd_min/rd_quo_sd,
-    #now, when we take the inverse of that, values are weighted according to precision
-    rd_quo_weight=1/rd_quo_sd_min_prop, 
+    rd_quo_sd_inv=1/rd_quo_sd,
+    rd_quo_weight=rd_quo_sd_min_prop, 
     
     #find outliers
     #no grouping needed as elsewhere, as the data are wide-form
@@ -185,8 +186,6 @@ wf_eff_emm_wide=read_csv("hpi3_data_for_meta_figure6.csv") %>%
     tree_canopy_prop_sqrt=sqrt(tree_canopy_prop),
     tree_canopy_prop_log=log(tree_canopy_prop),
     
-
-
     #categorize poverty for stratified analyses & modeling
     above_poverty_prop_cat=santoku::chop_equally(
       above_poverty_prop,groups=3)
@@ -205,6 +204,23 @@ save(wf_eff_emm_wide,file="wf_eff_emm_wide.RData")
 #wf_eff_emm_wide %>% dplyr::select(zcta,contains("rd_quo")) %>% View()
 names(wf_eff_emm_wide)
 # Analyses and checks before modeling------
+## check weights-----
+wf_eff_emm_wide %>% 
+  ggplot(aes(x=rd_quo_sd_min_prop))+
+  geom_histogram()
+wf_eff_emm_wide %>% 
+  ggplot(aes(x=rd_quo_sd_min_prop,y=rd_quo_sd))+
+  geom_point()
+
+wf_eff_emm_wide %>% 
+  ggplot(aes(x=rd_quo_weight,y=rd_quo_sd))+
+  geom_point()
+
+wf_eff_emm_wide %>% 
+  ggplot(aes(x=rd_quo_weight,y=rd_quo_sd_inv))+
+  geom_point()
+
+
 ##map and distribution of RD quo----
 setwd(here("data-processed"))
 load("zcta_ca_geo_simplified.RData")
@@ -658,6 +674,7 @@ rd_100k_quo_mean_wt_by_air_basin=wf_eff_emm_wide %>%
   ))
 
 rd_100k_quo_mean_wt_by_air_basin
+
 #map spatial variation by air basin
 load("california_air_basins_over_county.RData")
 california_air_basins_over_county %>% 
