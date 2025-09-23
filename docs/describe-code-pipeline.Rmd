@@ -124,11 +124,19 @@ glm_rd_ac_conf_ins_ruca_biome_int_ruca_biome =glm(
 
 ## 3. Predict alternative rate differences under various scenarios
 
-**The script:**
+**The script:** `predict-values-alt-tree-ac.R`
 
-What it does in detail
+**Dependencies**: It depends on the modeling script being run in the session's memory, as it uses the model objects. That script does not need to be run manually, however. At the top of this scripot, that script is run via `source(here("scripts","model-RD-as-outcome.R")).`
 
-# Other R scripts and RMarkdown documents
+**What it does, in summary:** The purpose of the script is to predict a range of alternative rate differences for the effect of wildfire on acute-care utilization over various scenarios. To define the alternative scenarios, for each intervention measure, the script finds quintile values (i.e., 20th percentile, 40th percentile,..., 80th percentile) over ZCTAs within biome. Percentiles are relative to biome to ensure that scenarios are realistic for a given biome. Then, for each scenario, in zip codes with a value of the effect modifier below that of the scenario's percentile, the effect modifiers are raised to the level of that percentile. And a new rate difference is calculated based on the new value for the effect modifier, holding all other variables constant. The script then calculates a difference in rate differences between the status–quo and alternative scenarios. It also calculates the difference in the absolute number of cases. To wash out the influence of modeling, the "status-quo" scenario is actually predicted using the model based, so it is akin to saying, what would the status-quo RD be if the patterns described by the model held true and all variables were at their status-quo levels? The script also produces confidence intervals for these measures via boostrapping. Finally, the script predicts various summary measures summing over all ZCTAs and stratifying summaries over rural-urban categories and biome.
+
+**Step-by-step details:**
+
+In progress
+
+**On integrating different effect modifiers:** In its present form, the code is not flexible enough to simply input a given effect modifier. The code uses separate functions for tree canopy and A/C. We did this to keep the code simpler to write.
+
+# Other code beyond the main pipeline (Data-gathering R scripts, R Markdown, Shiny)
 
 ## Scripts to gather data
 
@@ -145,3 +153,11 @@ These code files explain and gather data from various publicly available sources
 ## RMarkdown documents to create tables
 
 **`climate-health/docs/wf-health-scenarios-tables.Rmd`:** This RMarkdown document creates tables that can be readily pasted into a Word document for the manuscript. It relies on results from the main pipeline being either saved locally or created in memory during the session
+
+## The shiny app
+
+**Directory:** The shiny app's folder is `climate-health/climate-health-shiny`
+
+**Data management:** The shiny app expects all of its input data to be contained within that folder, so there is some additional data management needed to get the shiny app to work. This script (`climate-health-shiny/manage-data-for-app.R`) loads the data created elsewhere in the pipeline and brings it into the shiny app folder. So if the pipeline is altered, this script should be re-run to update the shiny app's data.
+
+**The app's script:** the script to run the shiny app: `app-wf-int.R`

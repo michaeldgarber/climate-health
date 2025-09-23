@@ -1637,12 +1637,45 @@ with <code>glm_</code>) are used in the next script.</p>
 </div>
 <div id="predict-alternative-rate-differences-under-various-scenarios" class="section level2">
 <h2>3. Predict alternative rate differences under various scenarios</h2>
-<p><strong>The script:</strong></p>
-<p>What it does in detail</p>
+<p><strong>The script:</strong>
+<code>predict-values-alt-tree-ac.R</code></p>
+<p><strong>Dependencies</strong>: It depends on the modeling script
+being run in the session’s memory, as it uses the model objects. That
+script does not need to be run manually, however. At the top of this
+scripot, that script is run via
+<code>source(here(&quot;scripts&quot;,&quot;model-RD-as-outcome.R&quot;)).</code></p>
+<p><strong>What it does, in summary:</strong> The purpose of the script
+is to predict a range of alternative rate differences for the effect of
+wildfire on acute-care utilization over various scenarios. To define the
+alternative scenarios, for each intervention measure, the script finds
+quintile values (i.e., 20th percentile, 40th percentile,…, 80th
+percentile) over ZCTAs within biome. Percentiles are relative to biome
+to ensure that scenarios are realistic for a given biome. Then, for each
+scenario, in zip codes with a value of the effect modifier below that of
+the scenario’s percentile, the effect modifiers are raised to the level
+of that percentile. And a new rate difference is calculated based on the
+new value for the effect modifier, holding all other variables constant.
+The script then calculates a difference in rate differences between the
+status–quo and alternative scenarios. It also calculates the difference
+in the absolute number of cases. To wash out the influence of modeling,
+the “status-quo” scenario is actually predicted using the model based,
+so it is akin to saying, what would the status-quo RD be if the patterns
+described by the model held true and all variables were at their
+status-quo levels? The script also produces confidence intervals for
+these measures via boostrapping. Finally, the script predicts various
+summary measures summing over all ZCTAs and stratifying summaries over
+rural-urban categories and biome.</p>
+<p><strong>Step-by-step details:</strong></p>
+<p>In progress</p>
+<p><strong>On integrating different effect modifiers:</strong> In its
+present form, the code is not flexible enough to simply input a given
+effect modifier. The code uses separate functions for tree canopy and
+A/C. We did this to keep the code simpler to write.</p>
 </div>
 </div>
-<div id="other-r-scripts-and-rmarkdown-documents" class="section level1">
-<h1>Other R scripts and RMarkdown documents</h1>
+<div id="other-code-beyond-the-main-pipeline-data-gathering-r-scripts-r-markdown-shiny" class="section level1">
+<h1>Other code beyond the main pipeline (Data-gathering R scripts, R
+Markdown, Shiny)</h1>
 <div id="scripts-to-gather-data" class="section level2">
 <h2>Scripts to gather data</h2>
 <p>The above sequence of scripts will work assuming all of the data are
@@ -1679,6 +1712,20 @@ This RMarkdown document creates tables that can be readily pasted into a
 Word document for the manuscript. It relies on results from the main
 pipeline being either saved locally or created in memory during the
 session</p>
+</div>
+<div id="the-shiny-app" class="section level2">
+<h2>The shiny app</h2>
+<p><strong>Directory:</strong> The shiny app’s folder is
+<code>climate-health/climate-health-shiny</code></p>
+<p><strong>Data management:</strong> The shiny app expects all of its
+input data to be contained within that folder, so there is some
+additional data management needed to get the shiny app to work. This
+script (<code>climate-health-shiny/manage-data-for-app.R</code>) loads
+the data created elsewhere in the pipeline and brings it into the shiny
+app folder. So if the pipeline is altered, this script should be re-run
+to update the shiny app’s data.</p>
+<p><strong>The app’s script:</strong> the script to run the shiny app:
+<code>app-wf-int.R</code></p>
 </div>
 </div>
 
