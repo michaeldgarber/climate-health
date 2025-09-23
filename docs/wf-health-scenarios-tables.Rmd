@@ -1,0 +1,366 @@
+---
+title: "tables-main-text"
+author: "Michael D Garber"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+---
+
+The purpose of this is to create tables for the main manuscript text.
+It is broken off from 
+climate-health/docs/wf-health-scenarios-doc.Rmd
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+library(here)
+library(mapview)  
+library(tmap)
+library(leafgl)
+library(tidyverse)
+library(viridis)
+library(viridisLite)
+library(leaflet)
+library(leaflet.extras)
+library(tmap)
+library(knitr)
+library(RColorBrewer)
+library(kableExtra)
+library(knitr)
+source(here("scripts","data-mgmt-analyses-before-modeling-RD-as-outcome.R"))
+```
+
+# Summary results
+## Tree canopy
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("tree_summary_overall.RData")
+load("tree_summary_overall_ci.RData")
+
+#broken off and adapted from scripts/predict-values-alt-tree-ac.R
+
+#names(tree_summary_overall)
+tree_summary_overall_for_kable=tree_summary_overall %>% 
+  left_join(
+    tree_summary_overall_ci,by="target_percentile"
+  ) %>% 
+  dplyr::select(
+    target_percentile,
+    n_zcta,
+    pop,
+    
+#    To keep the table smaller, just report the difference values
+#    contains("rd_100k_quo_pred"), 
+#    contains("rd_100k_alt"),
+    contains("rd_100k_diff_pred"),
+    
+#    contains("n_cases_diff_quo_pred"),
+#    contains("n_cases_diff_alt"),
+    contains("n_cases_diff_diff_pred")
+  )
+
+
+#Note n cases diff is per heat-wave day over all zip codes
+#Note that all are sum over the ZCTAs (not per ZCTA)
+tree_summary_overall_for_kable %>% 
+  #Pick fewer variables to present
+  kable(
+    digits=2,
+    format.args = list(big.mark = ","),
+    #Jul 14, 2025: column names need to be more precise,
+    #0 for status quo. Assume it's "predicted" status quo
+    col.names = c(
+      "Target %ile",
+      "N, ZCTAS intervened",
+            "Pop. affected",
+      
+      "Diff. in RD per 100k",
+      "Diff. in RD per 100k (95% LL)",
+      "Diff. in RD per 100k (95% UL)",
+
+      "Diff. in N, cases",
+      "Diff. in N, cases (95% LL)",
+      "Diff. in N, cases (95% UL)"
+        )
+  ) 
+```
+
+## Air conditioning
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("ac_summary_overall.RData")
+load("ac_summary_overall_ci.RData")
+
+#broken off and adapted from scripts/predict-values-alt-ac-ac.R
+
+#names(ac_summary_overall)
+ac_summary_overall_for_kable=ac_summary_overall %>% 
+  left_join(
+    ac_summary_overall_ci,by="target_percentile"
+  ) %>% 
+  dplyr::select(
+    target_percentile,
+    n_zcta,
+    pop,
+    
+#    To keep the table smaller, just report the difference values
+#    contains("rd_100k_quo_pred"), 
+#    contains("rd_100k_alt"),
+    contains("rd_100k_diff_pred"),
+    
+#    contains("n_cases_diff_quo_pred"),
+#    contains("n_cases_diff_alt"),
+    contains("n_cases_diff_diff_pred")
+  )
+
+
+#Note n cases diff is per heat-wave day over all zip codes
+#Note that all are sum over the ZCTAs (not per ZCTA)
+ac_summary_overall_for_kable %>% 
+  #Pick fewer variables to present
+  kable(
+    digits=2,
+    format.args = list(big.mark = ","),
+    #Jul 14, 2025: column names need to be more precise,
+    #0 for status quo. Assume it's "predicted" status quo
+    col.names = c(
+      "Target %ile",
+      "N, ZCTAS intervened",
+      "Pop. affected",
+      
+      "Diff. in RD per 100k",
+      "Diff. in RD per 100k (95% LL)",
+      "Diff. in RD per 100k (95% UL)",
+
+      "Diff. in N, cases",
+      "Diff. in N, cases (95% LL)",
+      "Diff. in N, cases (95% UL)"
+        )
+  ) 
+```
+
+
+# By RUCA and biome for 80th percentile only 
+
+## Tree
+
+### RUCA
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("tree_summary_ruca_cat.RData")
+load("tree_summary_ruca_cat_ci.RData")
+
+tree_summary_ruca_cat_for_kable=tree_summary_ruca_cat %>% 
+  filter(target_percentile==.80) %>% 
+  left_join(
+    tree_summary_ruca_cat_ci,by=c(
+      "target_percentile",
+      "ruca_cat")
+  ) %>% 
+  dplyr::select(
+    target_percentile,
+    ruca_cat,
+    n_zcta,
+    pop,
+
+    contains("rd_100k_diff_pred"),
+    contains("n_cases_diff_diff_pred")
+  )
+
+
+tree_summary_ruca_cat_for_kable %>% 
+  #Pick fewer variables to present
+  kable(
+    digits=2,
+    format.args = list(big.mark = ","),
+    col.names = c(
+      "Target percentile",
+      "Rural-urban category",
+      
+      "N, ZCTAS intervened",
+      "Pop. affected",
+      
+      "Diff. in RD per 100k",
+      "Diff. in RD per 100k (95% LL)",
+      "Diff. in RD per 100k (95% UL)",
+
+      "Diff. in N, cases",
+      "Diff. in N, cases (95% LL)",
+      "Diff. in N, cases (95% UL)"
+        )
+  ) 
+```
+
+
+### biome
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("tree_summary_biome_name_freq.RData")
+load("tree_summary_biome_name_freq_ci.RData")
+
+tree_summary_biome_name_freq_for_kable=tree_summary_biome_name_freq %>% 
+  filter(target_percentile==.80) %>% 
+  left_join(
+    tree_summary_biome_name_freq_ci,by=c(
+      "target_percentile",
+      "biome_name_freq")
+  ) %>% 
+  dplyr::select(
+    target_percentile,
+    biome_name_freq,
+    n_zcta,
+    pop,
+
+    contains("rd_100k_diff_pred"),
+    contains("n_cases_diff_diff_pred")
+  ) %>% 
+  #sort biome by population
+  arrange(desc(pop))
+
+
+tree_summary_biome_name_freq_for_kable %>% 
+  #Pick fewer variables to present
+  kable(
+    digits=2,
+    format.args = list(big.mark = ","),
+    col.names = c(
+      "Target percentile",
+      "Biome",
+      
+      "N, ZCTAS intervened",
+      "Pop. affected",
+      
+      "Diff. in RD per 100k",
+      "Diff. in RD per 100k (95% LL)",
+      "Diff. in RD per 100k (95% UL)",
+
+      "Diff. in N, cases",
+      "Diff. in N, cases (95% LL)",
+      "Diff. in N, cases (95% UL)"
+        )
+  ) 
+```
+
+
+
+## A/C
+
+
+### RUCA
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("ac_summary_ruca_cat.RData")
+load("ac_summary_ruca_cat_ci.RData")
+
+ac_summary_ruca_cat_for_kable=ac_summary_ruca_cat %>% 
+  filter(target_percentile==.80) %>% 
+  left_join(
+    ac_summary_ruca_cat_ci,by=c(
+      "target_percentile",
+      "ruca_cat")
+  ) %>% 
+  dplyr::select(
+    target_percentile,
+    ruca_cat,
+    n_zcta,
+    pop,
+
+    contains("rd_100k_diff_pred"),
+    contains("n_cases_diff_diff_pred")
+  )
+
+
+ac_summary_ruca_cat_for_kable %>% 
+  #Pick fewer variables to present
+  kable(
+    digits=2,
+    format.args = list(big.mark = ","),
+    col.names = c(
+      "Target percentile",
+      "Rural-urban category",
+      
+      "N, ZCTAS intervened",
+      "Pop. affected",
+      
+      "Diff. in RD per 100k",
+      "Diff. in RD per 100k (95% LL)",
+      "Diff. in RD per 100k (95% UL)",
+
+      "Diff. in N, cases",
+      "Diff. in N, cases (95% LL)",
+      "Diff. in N, cases (95% UL)"
+        )
+  ) 
+```
+
+
+### biome
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("ac_summary_biome_name_freq.RData")
+load("ac_summary_biome_name_freq_ci.RData")
+
+ac_summary_biome_name_freq_for_kable=ac_summary_biome_name_freq %>% 
+  filter(target_percentile==.80) %>% 
+  left_join(
+    ac_summary_biome_name_freq_ci,by=c(
+      "target_percentile",
+      "biome_name_freq")
+  ) %>% 
+  dplyr::select(
+    target_percentile,
+    biome_name_freq,
+    n_zcta,
+    pop,
+
+    contains("rd_100k_diff_pred"),
+    contains("n_cases_diff_diff_pred")
+  ) %>% 
+  #sort biome by population
+  arrange(desc(pop))
+
+
+ac_summary_biome_name_freq_for_kable %>% 
+  #Pick fewer variables to present
+  kable(
+    digits=2,
+    format.args = list(big.mark = ","),
+    col.names = c(
+      "Target percentile",
+      "Biome",
+      
+      "N, ZCTAS intervened",
+      "Pop. affected",
+      
+      "Diff. in RD per 100k",
+      "Diff. in RD per 100k (95% LL)",
+      "Diff. in RD per 100k (95% UL)",
+
+      "Diff. in N, cases",
+      "Diff. in N, cases (95% LL)",
+      "Diff. in N, cases (95% UL)"
+        )
+  ) 
+```
