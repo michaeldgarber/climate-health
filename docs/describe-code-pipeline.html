@@ -1491,9 +1491,9 @@ border-radius: 0px;
 <p>For an overview of the project, please see here:</p>
 <p><a href="https://michaeldgarber.github.io/climate-health/wf-health-scenarios-doc.html" class="uri">https://michaeldgarber.github.io/climate-health/wf-health-scenarios-doc.html</a></p>
 <p>This document describes code that produces the results. The code
-files are located in the <a href="https://github.com/michaeldgarber/climate-health/tree/main/scripts">scripts</a>
-folder of this repository: <a href="https://github.com/michaeldgarber/climate-health/tree/main" class="uri">https://github.com/michaeldgarber/climate-health/tree/main</a>.
-The three R scripts to run this analysis are the following:</p>
+files to conduct the main steps of the analysis are located in the <a href="https://github.com/michaeldgarber/climate-health/tree/main/scripts">scripts</a>
+folder of this repository: <a href="https://github.com/michaeldgarber/climate-health/tree/main" class="uri">https://github.com/michaeldgarber/climate-health/tree/main</a>.</p>
+<p>The three R scripts to run this analysis are the following:</p>
 <ol style="list-style-type: decimal">
 <li><strong><code>data-mgmt-analyses-before-modeling-RD-as-outcome.R</code></strong>
 This code loads data from various folders, combines the data together,
@@ -1525,19 +1525,33 @@ from various sources. Specifically, data include:</p>
 <ul>
 <li><p>Effect estimates relating wildfire days with hospitalizations
 from <a href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2023GH000997">Do
-et al (2024)</a>. Measures are the rate difference along with its
-corresponding standard deviation.</p></li>
+et al (2024)</a>. Measures are the rate difference (variable name:
+<code>rd_quo_pt</code>) along with its corresponding standard deviation
+(<code>rd_quo_sd</code>). The <code>_quo</code> suffix in the variable
+name is used to differentiate the “status-quo” rate difference from an
+alternative rate difference used later in the pipeline. Other variables
+related to the rate difference are apparent from the
+<code>dplyr::mutate()</code> step in the code.</p></li>
 <li><p>Various zip-code-level demographic variables, some of which are
-included in the .csv file shared by authors of the Do et al. article.
-Other covariates are gathered directly from the <a href="https://api.healthyplacesindex.org">Healthy Places Index</a> of
-the Public Health Alliance of Southern California</p></li>
-<li><p>Each zip code’s biome</p></li>
-<li><p>Each zip code’s rural-urban commuting code</p></li>
-<li><p>Each zip code’s level of impervious surfaces</p></li>
-<li><p>Each zip code’s air basin</p></li>
+included in the .csv file that were shared by authors of the Do et
+al. article, for convenience. Other covariates are gathered directly
+from the <a href="https://api.healthyplacesindex.org">Healthy Places
+Index</a> of the Public Health Alliance of Southern California.</p></li>
+<li><p>Each zip code’s biome (variable name:
+<code>biome_name_freq</code>, where the <code>_freq</code> denotes that
+the data are ordered by frequency)</p></li>
+<li><p>Each zip code’s rural-urban commuting code (variable name:
+<code>ruca_cat</code>, which is a 4-category variable with 1-3 being
+most urban and the other categories progressively more rural)</p></li>
+<li><p>Each zip code’s proportion of land cover with impervious surface
+(variable name: <code>imperv_prop</code>)</p></li>
+<li><p>Each zip code’s air basin (variable name:
+<code>basin_name</code>)</p></li>
 </ul>
 <p><strong>Processing:</strong> It then links all of the information
-together at the zip-code level using <code>dplyr::left_join()</code></p>
+together at the zip-code level using <code>dplyr::left_join()</code>,
+joining by the field <code>zcta</code> that each dataset has in
+common.</p>
 <p><strong>Quality checks and data exploration:</strong> The code
 subsequently creates maps and plots to assess univariate distributions
 of the variables along with bivariate distributions to assess how
@@ -1545,11 +1559,11 @@ variables relate to one another. These checks are performed to gain a
 better understanding of the data and to inform modeling.</p>
 <p><strong>Outputs:</strong> The code has two important outputs:</p>
 <ul>
-<li><p><strong>wf_eff_emm_wide.R</strong> This is the final
-zip-code-level dataset with the above information linked
+<li><p><strong><code>wf_eff_emm_wide.R</code>:</strong> This is the
+final zip-code-level dataset with the above information linked
 together</p></li>
-<li><p><strong>wf_eff_emm_wide_no_outliers</strong> The same dataset
-removing observations containing outliers for the rate
+<li><p><strong><code>wf_eff_emm_wide_no_outliers.R</code>:</strong> The
+same dataset removing observations containing outliers for the rate
 difference</p></li>
 </ul>
 </div>
@@ -1592,17 +1606,34 @@ estimates more highly. The weight variable is
 denominator is the standard deviation for the modeled RD in that ZCTA
 and the numerator is the minimum SD over all ZCTAS. This way, the ZCTA
 with. The values with higher SDs will receive lower weights.</p>
-<p>The final glm model objects for tree canopy and air-conditioning,
-respectively, are:</p>
-<ul>
-<li><p><strong>For tree canopy as the intervention:</strong>
-glm_rd_tree_conf_ins_ruca_biome_int_ruca_biome</p></li>
-<li><p><strong>For air conditioning as the intervention:</strong>
-glm_rd_ac_conf_ins_ruca_biome_int_ruca_biome</p></li>
-</ul>
+<p>For reference, the code to fit each final glm model follows:</p>
+<p><strong><em>For tree canopy as the intervention</em>:</strong>
+<code>glm_rd_tree_conf_ins_ruca_biome_int_ruca_biome</code></p>
+<pre class="r"><code>glm_rd_tree_conf_ins_ruca_biome_int_ruca_biome =glm(
+  rd_quo_pt~tree_canopy_prop_sqrt +insured_prop + ruca_cat +
+    biome_name_freq+
+    tree_canopy_prop_sqrt*ruca_cat+
+    tree_canopy_prop_sqrt*biome_name_freq,
+  family = gaussian,
+  na.action = &quot;na.exclude&quot;, 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)</code></pre>
+<p><strong><em>For air conditioning as the intervention</em>:</strong>
+<code>glm_rd_ac_conf_ins_ruca_biome_int_ruca_biome</code></p>
+<pre class="r"><code>glm_rd_ac_conf_ins_ruca_biome_int_ruca_biome =glm(
+  rd_quo_pt~ac_prop +insured_prop + ruca_cat +
+    biome_name_freq+
+    ac_prop*ruca_cat+
+    ac_prop*biome_name_freq,
+  family = gaussian,
+  na.action = &quot;na.exclude&quot;, 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)</code></pre>
 <p><strong>Output:</strong> This script does not save any output to
-disc. It can be run relatively quickly. Its outputs (the model results)
-are used in the next script.</p>
+disc, as it runs quite quickly. Its outputs (the model objects beginning
+with <code>glm_</code>) are used in the next script.</p>
 </div>
 <div id="predict-alternative-rate-differences-under-various-scenarios" class="section level2">
 <h2>3. Predict alternative rate differences under various scenarios</h2>
@@ -1610,8 +1641,10 @@ are used in the next script.</p>
 <p>What it does in detail</p>
 </div>
 </div>
-<div id="other-scripts" class="section level1">
-<h1>Other scripts</h1>
+<div id="other-r-scripts-and-rmarkdown-documents" class="section level1">
+<h1>Other R scripts and RMarkdown documents</h1>
+<div id="scripts-to-gather-data" class="section level2">
+<h2>Scripts to gather data</h2>
 <p>The above sequence of scripts will work assuming all of the data are
 available locally on the computer in the locations specified by the
 relative paths, as indicated in the statements setting the working
@@ -1625,19 +1658,28 @@ available sources. As spatial data can be more time consuming to gather,
 I don’t run these scripts every time. Instead, I have saved the relevant
 information to create aspatial zip-code-level look-up tables that are
 joined with the main effect-estimate data in
-<strong>data-mgmt-analyses-before-modeling-RD-as-outcome.R</strong>.</p>
+<strong><code>data-mgmt-analyses-before-modeling-RD-as-outcome.R</code></strong><code>.</code></p>
 <ul>
-<li><p><strong>get-zcta-california-geo.R</strong> This code uses
-tidycensus and other functions to read in publicly available geometry
-data for zip codes in the State of California. It also reads in
+<li><p><strong><code>get-zcta-california-geo.R</code></strong> This code
+uses tidycensus and other functions to read in publicly available
+geometry data for zip codes in the State of California. It also reads in
 zip-code-level lookup tables for <strong>rural-urban</strong> commuting
 codes.</p></li>
-<li><p><strong>link-zctas-biome.R</strong> This code links Zip codes
-with biomes.</p></li>
-<li><p><strong>california-air-basins-merge-w-zctas.R</strong> This code
-reads in data on air basin and merges with the zip-code
+<li><p><strong><code>link-zctas-biome.R</code></strong> This code links
+Zip codes with biomes.</p></li>
+<li><p><strong><code>california-air-basins-merge-w-zctas.R</code></strong>
+This code reads in data on air basin and merges with the zip-code
 geometry.</p></li>
 </ul>
+</div>
+<div id="rmarkdown-documents-to-create-tables" class="section level2">
+<h2>RMarkdown documents to create tables</h2>
+<p><strong><code>climate-health/docs/wf-health-scenarios-tables.Rmd</code>:</strong>
+This RMarkdown document creates tables that can be readily pasted into a
+Word document for the manuscript. It relies on results from the main
+pipeline being either saved locally or created in memory during the
+session</p>
+</div>
 </div>
 
 
