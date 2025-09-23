@@ -203,6 +203,8 @@ save(wf_eff_emm_wide,file="wf_eff_emm_wide.RData")
 
 #wf_eff_emm_wide %>% dplyr::select(zcta,contains("rd_quo")) %>% View()
 names(wf_eff_emm_wide)
+table(wf_eff_emm_wide$biome_name)
+table(wf_eff_emm_wide$biome_name_freq)
 # Analyses and checks before modeling------
 ## check weights-----
 wf_eff_emm_wide %>% 
