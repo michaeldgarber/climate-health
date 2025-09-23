@@ -10,7 +10,7 @@ output:
 
 By Michael Garber
 
-Revised September 22, 2025
+Revised September 23, 2025
 
 URL of this page: <https://michaeldgarber.github.io/climate-health/describe-code-pipeline>
 
@@ -134,7 +134,9 @@ glm_rd_ac_conf_ins_ruca_biome_int_ruca_biome =glm(
 
 In progress
 
-**On integrating different effect modifiers:** In its present form, the code is not flexible enough to simply input a given effect modifier. The code uses separate functions for tree canopy and A/C. We did this to keep the code simpler to write.
+**On integrating different effect modifiers:** To integrate a new effect modifier, the code could be slightly modified by finding and replacing the name of one of the effect modifiers for a new effect modifier of interest.
+
+We considered including an option in the functions to input the name of an effect modifier as a function argument. This would reduce the need for copy and paste and keep the code more DRY (don't-repeat-yourself). However, it would also make the functions more complex and thus more likely to not work. So the functions currently do not have this flexibility.
 
 # Other code beyond the main pipeline (Data-gathering R scripts, R Markdown, Shiny)
 

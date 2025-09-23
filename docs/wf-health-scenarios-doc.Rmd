@@ -1,5 +1,5 @@
 ---
-title: "Simulating how environmental interventions may change the effect of wildfire on acute-care utilization"
+title: "Simulating how tree canopy and air conditioning may modify effects of wildfire on healthcare utilization: a locally tailored health-impact assessment"
 author: "Michael D Garber"
 date: "`r Sys.Date()`"
 output:
@@ -28,8 +28,8 @@ library(knitr)
 library(RColorBrewer)
 library(kableExtra)
 library(knitr)
-source(here("scripts","read-wrangle-eff-estimates.R"))#load measures
 source(here("scripts","data-mgmt-analyses-before-modeling-RD-as-outcome.R"))
+source(here("scripts","model-RD-as-outcome.R"))
 ```
 
 Corresponding shiny app: <https://michaeldgarber.shinyapps.io/app-wf-int/>
@@ -96,6 +96,9 @@ Below, adapted from their figure 6, is a plot of the increase in rate difference
 #| echo: false
 #| warning: false
 #| message: false
+
+#Sep 23, 2025: pay attention to folder
+source(here("scripts","scripts-emm-no-conf-adj-old","read-wrangle-eff-estimates.R"))
 emm_rd_per_iqr %>% 
   filter(var_type=="ses") %>% 
   left_join(lookup_emm_measure_labels,by="emm_measure") %>% 
@@ -158,7 +161,7 @@ A **secondary goal**, related to training and skill development, is to explore t
 
 The overall approach is as follows:
 
-1.  Estimate the effect of both tree canopy and air conditioning (separately) on the spatially varying rate difference, controlling for potential confounders that may influence these associations such as urban vs rural status, biome, and socioeconomic characteristics. In these models, we will also consider interaction variables, allowing the relationship between these main exposures (tree canopy and AC) and the rate difference to vary across strata of a third variable.
+1.  Estimate the effect of both tree canopy and air conditioning (separately) on the spatially varying rate difference, controlling for potential confounders that may influence these associations such as urban vs rural status, biome, and socioeconomic characteristics. In these models, we also consider interaction variables, allowing the relationship between these main exposures (tree canopy and AC) and the rate difference to vary across strata of a third variable.
 2.  Use these models to simulate the overall burden and spatial distribution of healthcare utilization attributable to wildfire that could be averted by intervening upon these variables.that
 
 ## Data exploration
@@ -169,9 +172,7 @@ July 9, 2025 note: I'm moving much of this over to a separate markdown doc to cr
 
 ~/Library/CloudStorage/Dropbox/Work/CSU-UCSD post-doc/post-doc-research/climate-health-california/climate-health/docs/supplement.Rmd
 
-### Univariate distributions
-
-#### Outcome: Rate difference per 100,000 person-days
+### Outcome: Rate difference per 100,000 person-days
 
 ```{r}
 #| echo: false
@@ -214,8 +215,8 @@ wf_eff_emm_wide %>%
   labs(x="Rate difference per 100,000 person-days")
 ```
 
-#### Intervention variables: Tree canopy and air conditioning
-
+### Intervention variables 
+#### Tree canopy
 ```{r}
 #| echo: false
 #| warning: false
@@ -239,6 +240,14 @@ wf_eff_emm_wide %>%
     x="Proportion tree canopy (square root)"
   )
 
+
+```
+
+#### Air conditioning
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% 
   ggplot(aes(x=ac_prop))+
@@ -249,6 +258,40 @@ wf_eff_emm_wide %>%
   )
 ```
 
+
+#### Impervious surface
+(exploring as a potential intervention variable)
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(x=imperv_prop))+
+  geom_histogram()
+```
+
+
+Impervious surfaces vs. tree canopy
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(y=imperv_prop,x=tree_canopy_prop))+
+  geom_point()
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(y=imperv_prop,x=tree_canopy_prop_sqrt))+
+  geom_point()
+
+```
+
+
+
+### Covariates
 #### Proportion above poverty and proportion insured
 
 ```{r}
@@ -312,9 +355,10 @@ zcta_ca_geo_simplified %>%
 )
 ```
 
-### Bivariate and stratified associations
+### RD x intervention vars and by other covariates
 
-#### RD x Tree canopy
+#### RD x intervention variables
+##### RD x Tree canopy
 
 Here are scatterplots plotting the rate difference against the (square root of) proportion tree canopy:
 
@@ -322,7 +366,10 @@ Here are scatterplots plotting the rate difference against the (square root of) 
 #| echo: false
 #| warning: false
 #| message: false
-library(jtools)#for summarizing glm outputs with more customization
+
+setwd(here("data-processed"))
+load("wf_eff_emm_wide_no_outliers.RData")
+library(jtools) #for summarizing glm outputs with more customization
 #This look really nice, actually
 #https://www.rdocumentation.org/packages/jtools/versions/2.3.0/topics/summ.glm
 glm_rd_100k_quo_pt_tree_canopy_prop_sqrt=glm(
@@ -336,6 +383,8 @@ jtools::summ(
   glm_rd_100k_quo_pt_tree_canopy_prop_sqrt,
     model.fit=F, #for brevity in the output, dont' show
   digits=3)
+
+
 
 wf_eff_emm_wide %>% 
   filter(rd_quo_outlier==0) %>% #
@@ -351,7 +400,7 @@ wf_eff_emm_wide %>%
 
 There is a slight negative association between tree canopy and the RD, but it is rather weak.
 
-#### RD x Tree canopy x rural-urban
+##### RD x Tree canopy x rural-urban
 
 We also stratified this association by urban-rural category:
 
@@ -388,7 +437,7 @@ wf_eff_emm_wide %>%
 
 The stratified scatterplot suggests that in the most urban areas and in the least urban areas, higher tree canopy is associated with a **lower** rate difference, whereas in the other two RUCA categories, the association is in the other direction: higher tree canopy is associated with a **higher** rate difference (i.e., suggesting a more harmful effect of wildfire on the outcome).
 
-#### RD x Tree canopy x biome
+##### RD x Tree canopy x biome
 
 We also stratified by biome, which illustrates, as above, that the tree-canopy distribution differs starkly by biome. The RD x tree canopy association appears to be negative in Mediterran Forests, Woodlands & Scrub and in Deserts & Xeric shrublands, but slightly positive in the other two.
 
@@ -428,7 +477,7 @@ wf_eff_emm_wide %>%
    theme(strip.text.y = element_text(angle = 0))
 ```
 
-#### RD x A/C
+##### RD x A/C
 
 The association with air conditioning is weakly negative.
 
@@ -461,7 +510,7 @@ wf_eff_emm_wide %>%
   )
 ```
 
-#### RD x A/C x rural-urban
+##### RD x A/C x rural-urban
 
 Like with tree canopy, the RD x A/C association varies by rural-urban category. It is more negative in more populous areas, and positive–suggesting air conditioning is associated with a **higher** difference effect of wildfire on acute-care utilization in less populous areas.
 
@@ -496,7 +545,7 @@ wf_eff_emm_wide %>%
     )
 ```
 
-#### RD x A/C x biome
+##### RD x A/C x biome
 
 ```{r}
 #| echo: false
@@ -533,7 +582,130 @@ wf_eff_emm_wide %>%
    theme(strip.text.y = element_text(angle = 0))
 ```
 
-#### RD x proportion above poverty
+
+##### RD x Impervious surfaces
+Sep 23, 2025: Considering impervious surfaces as an alternative effect modifier
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+setwd(here("data-processed"))
+load("wf_eff_emm_wide_no_outliers.RData")
+library(jtools) #for summarizing glm outputs with more customization
+#This look really nice, actually
+#https://www.rdocumentation.org/packages/jtools/versions/2.3.0/topics/summ.glm
+glm_rd_100k_quo_pt_imperv_prop=glm(
+  rd_100k_quo_pt~imperv_prop,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_imperv_prop,
+    model.fit=F, #for brevity in the output, dont' show
+  digits=3)
+
+
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=imperv_prop, y=rd_100k_quo_pt))+
+  geom_point()+
+  geom_smooth(method="lm")+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion impervious surfaces"
+  )
+```
+
+There is a slight negative association between tree canopy and the RD, but it is rather weak.
+
+##### RD x Impervious surfaces x rural-urban
+
+We also stratified this association by urban-rural category:
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+glm_rd_100k_quo_pt_imperv_prop_int_ruca_cat=glm(
+  rd_100k_quo_pt~imperv_prop + ruca_cat +ruca_cat*imperv_prop,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_imperv_prop_int_ruca_cat,
+      model.fit=F, #for brevity in the output, dont' show
+  digits=3)
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #remove values above the 99th percentile and below the 1st
+  ggplot(aes(x=imperv_prop, y=rd_100k_quo_pt))+
+  geom_point()+
+  facet_grid(
+    rows="ruca_cat"
+  )+
+  geom_smooth(method="lm")+
+  theme_bw()+
+    labs(
+    y="Rate difference per 100,000 person-days",
+    x="Impervious surfaces"
+    )
+```
+
+
+
+##### RD x Impervious surfaces x biome
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+glm_rd_100k_quo_pt_imperv_prop_int_biome=glm(
+  rd_100k_quo_pt~imperv_prop +biome_name_freq +
+    biome_name_freq*imperv_prop,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_imperv_prop_int_biome,
+  model.fit=F, #for brevity in the output, dont' show
+             digits=3)
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(x=imperv_prop, y=rd_100k_quo_pt))+
+  geom_point()+
+  facet_grid(
+    rows="biome_name_freq",
+    labeller = label_wrap_gen(20)#wrap text!
+  )+
+  geom_smooth(method="lm")+
+  theme_bw()+
+    labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion impervious surfaces"
+    )+
+  #see here:
+  #https://ggplot2.tidyverse.org/reference/facet_grid.html
+   theme(strip.text.y = element_text(angle = 0))
+```
+
+
+
+#### RD x other covariates
+##### RD x proportion above poverty
 
 ```{r}
 #| echo: false
@@ -551,7 +723,7 @@ wf_eff_emm_wide %>%
   )
 ```
 
-#### RD x proportion insured
+##### RD x proportion insured
 
 The association between the RD and proportion with insurance is stronger than that between proportion above poverty.
 
@@ -571,7 +743,7 @@ wf_eff_emm_wide %>%
   )
 ```
 
-#### RD x biome
+##### RD x biome
 
 The RD distribution is in the positive direction in **Mediterranean Forests, Woodlands & Scrub** and more negative in all the others.
 
@@ -607,7 +779,7 @@ wf_eff_emm_wide %>%
    scale_x_discrete(labels = scales::label_wrap(10))
 ```
 
-#### RD x urban-rural category
+##### RD x urban-rural category
 
 The distribution is more negative in more rural areas, suggesting in those areas, wildfires had a **preventive** effect on healthcare utilization
 
@@ -642,6 +814,7 @@ wf_eff_emm_wide %>%
 #  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
    scale_x_discrete(labels = scales::label_wrap(10))
 ```
+
 
 ## Modeling
 
@@ -748,7 +921,7 @@ jtools::summ(
 
 -   **Choice of modeling distribution.** We used simple linear regression because the outcome (the rate difference) is roughly normally distributed. Unlike a rate, for example, it is not bounded by zero, so Poisson regression is not needed.
 
--   **Integrating uncertainty.** To integrate uncertainty into results, we re-sampled the standard errors of the model-predicted values from a normal distribution (mean=predicted value, SD=standard error of predicted value). We then took the 5th and 95th percentiles of the corresponding values as the 95% confidence intervals.
+-   **Integrating uncertainty.** To integrate uncertainty into results, we re-sampled residuals of the model-predicted values from a normal distribution (mean=predicted value, SD=residual standard deviation). We then took the 5th and 95th percentiles of the corresponding values as the 95% confidence intervals.
 
 ## Predicting values over several scenarios
 

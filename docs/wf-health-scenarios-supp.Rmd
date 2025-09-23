@@ -152,6 +152,20 @@ wf_eff_emm_wide %>%
   )
 ```
 
+### Impervious surface
+(exploring as a potential intervention variable)
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(x=imperv_prop))+
+  geom_histogram()
+```
+
+
+
 ## Other socio-demographic and geographic characteristics
 
 ### Proportion above poverty
@@ -323,8 +337,9 @@ jtools::summ(
     model.fit=F, #for brevity in the output, dont' show
   digits=3)
 
-wf_eff_emm_wide_no_outliers %>% 
-  group_by(STATE) %>% 
+corr_tree_canopy_prop_sqrt_overall=wf_eff_emm_wide_no_outliers %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
   summarise(
     corr_spearman=cor(
       x=tree_canopy_prop_sqrt,
@@ -335,10 +350,10 @@ wf_eff_emm_wide_no_outliers %>%
       y=rd_100k_quo_pt,
       method="pearson")
   ) %>% 
-  dplyr::select(-STATE) %>% 
-  kable(digits=2)
+  mutate(measure="tree_canopy_prop_sqrt")
 
-
+corr_tree_canopy_prop_sqrt_overall %>% 
+    kable(digits=2) 
 
 
 wf_eff_emm_wide %>% 
@@ -362,7 +377,8 @@ We stratified associations by biome, which illustrates, as above, that the tree-
 #| echo: false
 #| warning: false
 #| message: false
-wf_eff_emm_wide_no_outliers %>% 
+
+corr_tree_canopy_prop_sqrt_biome_name_freq=wf_eff_emm_wide_no_outliers %>% 
   group_by(biome_name_freq) %>% 
   summarise(
     corr_spearman=cor(
@@ -374,7 +390,10 @@ wf_eff_emm_wide_no_outliers %>%
       y=rd_100k_quo_pt,
       method="pearson")
   ) %>% 
-  kable(digits=2)
+  mutate(measure="tree_canopy_prop_sqrt")
+  
+corr_tree_canopy_prop_sqrt_biome_name_freq %>% 
+    kable(digits=2) 
 ```
 
 
@@ -421,14 +440,15 @@ wf_eff_emm_wide %>%
 
 We also stratified this association by urban-rural category.
 
-The stratified scatterplot suggests that in the most urban areas and in the least urban areas, higher tree canopy is associated with a **lower** rate difference, whereas in the other two RUCA categories, the association is in the other direction: higher tree canopy is associated with a **higher** rate difference (i.e., suggesting a more harmful effect of wildfire on the outcome).
+The stratified scatterplot suggests that in the most urban areas and in the least urban areas, higher tree canopy is associated with a **lower** rate difference. This result is in the expected direction: higher tree canopy, lower effect of wildfire.
+In the other two RUCA categories, the association is in the other direction: higher tree canopy is associated with a **higher** rate difference (i.e., suggesting a more harmful effect of wildfire on the outcome as tree canopy rises).
 
 ```{r}
 #| echo: false
 #| warning: false
 #| message: false
 
-wf_eff_emm_wide_no_outliers %>% 
+corr_tree_canopy_prop_sqrt_ruca_cat=wf_eff_emm_wide_no_outliers %>% 
   group_by(ruca_cat) %>% 
   summarise(
     corr_spearman=cor(
@@ -440,7 +460,10 @@ wf_eff_emm_wide_no_outliers %>%
       y=rd_100k_quo_pt,
       method="pearson")
   ) %>% 
-  kable(digits=2)
+  mutate(measure="tree_canopy_prop_sqrt")
+
+corr_tree_canopy_prop_sqrt_ruca_cat %>% 
+    kable(digits=2) 
 
 ```
 
@@ -501,7 +524,7 @@ jtools::summ(
     model.fit=F, #for brevity in the output, dont' show
   digits=3)
 
-wf_eff_emm_wide_no_outliers %>% 
+corr_ac_prop_overall=wf_eff_emm_wide_no_outliers %>% 
   mutate(overall=1) %>% 
   group_by(overall) %>% 
   summarise(
@@ -516,7 +539,10 @@ wf_eff_emm_wide_no_outliers %>%
       method="pearson",
       use="complete.obs")
   ) %>% 
-  kable(digits=2)
+  mutate(measure="ac_prop")
+
+corr_ac_prop_overall %>% 
+    kable(digits=2)
 
 
 
@@ -538,7 +564,8 @@ wf_eff_emm_wide %>%
 #| echo: false
 #| warning: false
 #| message: false
-wf_eff_emm_wide_no_outliers %>% 
+
+corr_ac_prop_biome_name_freq=wf_eff_emm_wide_no_outliers %>% 
   group_by(biome_name_freq) %>% 
   summarise(
     corr_spearman=cor(
@@ -552,7 +579,10 @@ wf_eff_emm_wide_no_outliers %>%
       method="pearson",
       use="complete.obs")
   ) %>% 
-  kable(digits=2)
+  mutate(measure="ac_prop")
+
+corr_ac_prop_biome_name_freq %>% 
+      kable(digits=2)
 
 ```
 
@@ -602,7 +632,7 @@ Like with tree canopy, the RD x A/C association varies by rural-urban category. 
 #| echo: false
 #| warning: false
 #| message: false
-wf_eff_emm_wide_no_outliers %>% 
+corr_ac_prop_ruca_cat=wf_eff_emm_wide_no_outliers %>% 
   group_by(ruca_cat) %>% 
   summarise(
     corr_spearman=cor(
@@ -616,7 +646,12 @@ wf_eff_emm_wide_no_outliers %>%
       method="pearson",
       use="complete.obs")
   ) %>% 
-  kable(digits=2)
+  mutate(measure="ac_prop")
+
+corr_ac_prop_ruca_cat %>% 
+      kable(digits=2)
+
+
 ```
 
 ```{r}
@@ -651,6 +686,206 @@ wf_eff_emm_wide %>%
     )
 ```
 
+
+
+## RD x impervious surfaces x geographic measures
+### RD x Proportion impervious surfaces
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+glm_rd_100k_quo_pt_imperv_prop=glm(
+  rd_100k_quo_pt~imperv_prop,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_imperv_prop,
+    model.fit=F, #for brevity in the output, dont' show
+  digits=3)
+
+corr_imperv_prop_overall=wf_eff_emm_wide_no_outliers %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=imperv_prop,
+      y=rd_100k_quo_pt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=imperv_prop,
+      y=rd_100k_quo_pt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  mutate(measure="imperv_prop")
+
+corr_imperv_prop_overall %>% 
+  kable(digits=2)
+
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #
+  ggplot(aes(x=imperv_prop, y=rd_100k_quo_pt))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion impervious surfaces"
+  )
+```
+
+### RD x Proportion impervious surfaces x biome
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+corr_imperv_prop_biome_name_freq=wf_eff_emm_wide_no_outliers %>% 
+  group_by(biome_name_freq) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=imperv_prop,
+      y=rd_100k_quo_pt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=imperv_prop,
+      y=rd_100k_quo_pt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  mutate(measure="imperv_prop")
+
+corr_imperv_prop_biome_name_freq %>% 
+    kable(digits=2)
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+glm_rd_100k_quo_pt_imperv_prop_int_biome=glm(
+  rd_100k_quo_pt~imperv_prop + biome_name_freq +biome_name_freq*imperv_prop,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_imperv_prop_int_biome,
+      model.fit=F, #for brevity in the output, dont' show
+  digits=3)
+
+
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(x=imperv_prop, y=rd_100k_quo_pt))+
+  geom_point()+
+  facet_grid(
+    rows="biome_name_freq",
+    labeller = label_wrap_gen(20)#wrap text!
+  )+
+  geom_smooth(method="lm")+
+  theme_bw()+
+    labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion Proportion impervious surfaces"
+    )+
+  #see here:
+  #https://ggplot2.tidyverse.org/reference/facet_grid.html
+   theme(strip.text.y = element_text(angle = 0))
+```
+
+
+### RD x Proportion impervious surfaces x rural-urban
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+corr_imperv_prop_ruca_cat=wf_eff_emm_wide_no_outliers %>% 
+  group_by(ruca_cat) %>% 
+  summarise(
+    corr_spearman=cor(
+      x=imperv_prop,
+      y=rd_100k_quo_pt,
+      method="spearman",
+      use="complete.obs"),
+    corr_pearson=cor(
+      x=imperv_prop,
+      y=rd_100k_quo_pt,
+      method="pearson",
+      use="complete.obs")
+  ) %>% 
+  mutate(measure="imperv_prop")
+
+corr_imperv_prop_ruca_cat %>% 
+    kable(digits=2) 
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+glm_rd_100k_quo_pt_imperv_prop_int_ruca_cat=glm(
+  rd_100k_quo_pt~imperv_prop + ruca_cat +ruca_cat*imperv_prop,
+  family = gaussian,
+  na.action = "na.exclude", 
+  weights = rd_quo_weight,
+  data = wf_eff_emm_wide_no_outliers
+)
+jtools::summ(
+  glm_rd_100k_quo_pt_imperv_prop_int_ruca_cat,
+      model.fit=F, #for brevity in the output, dont' show
+  digits=3)
+
+
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% #remove values above the 99th percentile and below the 1st
+  ggplot(aes(x=imperv_prop, y=rd_100k_quo_pt))+
+  geom_point()+
+  facet_grid(
+    rows="ruca_cat"
+  )+
+  geom_smooth(method="lm")+
+  theme_bw()+
+    labs(
+    y="Rate difference per 100,000 person-days",
+    x="Proportion impervious surfaces"
+    )
+```
+
+
+## Comparison table of stratified correlations
+```{r}
+#overall
+corr_tree_canopy_prop_sqrt_overall %>% 
+  bind_rows(corr_ac_prop_overall,corr_imperv_prop_overall) %>% 
+  kable(digits=2) 
+
+#biome
+corr_tree_canopy_prop_sqrt_biome_name_freq %>% 
+  bind_rows(corr_ac_prop_biome_name_freq,corr_imperv_prop_biome_name_freq) %>% 
+  kable(digits=2) 
+
+
+#rural-urban
+corr_tree_canopy_prop_sqrt_ruca_cat %>% 
+  bind_rows(corr_ac_prop_ruca_cat,corr_imperv_prop_ruca_cat) %>% 
+  kable(digits=2) 
+
+```
 
 
 ## RD x community characteristics
@@ -801,7 +1036,9 @@ wf_eff_emm_wide %>%
    scale_x_discrete(labels = scales::label_wrap(10))
 ```
 
-## Tree canopy and AC x community characteristics
+
+
+## Intervention vars x community characteristics
 ### Tree canopy
 #### Tree canopy x prop. above poverty
 ```{r}
@@ -1136,4 +1373,20 @@ wf_eff_emm_wide %>%
 ```
 
 
+### Impervious surfaces
+How does imp. surfaces compare with tree canopy?
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(y=imperv_prop,x=tree_canopy_prop))+
+  geom_point()
 
+wf_eff_emm_wide %>% 
+  filter(rd_quo_outlier==0) %>% 
+  ggplot(aes(y=imperv_prop,x=tree_canopy_prop_sqrt))+
+  geom_point()
+
+```
