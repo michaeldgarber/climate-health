@@ -2,18 +2,21 @@
 #For the project on effect modification of wildfire-hospitalization RD by A/C, green space, 
 #and maybe other intervention variables
 
-#Sep 22, 2025: renaming file to more general
+#Sep 22, 2025: renaming file to be more general
+#Oct 23, 2025: updating with new scripts
+
+#Note that the script for the wf effects must precede the heat script
+#because the wf script includes the covariates
 
 library(here)
-
-#The only files that need to be run are these
-
-#Load data, create some new variables, combine together
-source(here("scripts","data-mgmt-analyses-before-modeling-RD-as-outcome.R"))
+source(here("scripts","read-wf-hosp.R"))
+source(here("scripts","read-heat-hosp.R"))
 
 #Fit models for effect of intervention variables on the rate difference
-source(here("scripts","model-RD-as-outcome.R"))
+source(here("scripts","model-RD-as-outcome-final.R"))
 
 #Define scenarios and predict alternative values of RD based on scenario values
-source(here("scripts","predict-values-alt-tree-ac.R"))
+source(here("scripts","predict-values-alt.r"))
 
+#summarize
+source(here("scripts","predict-values-alt-summary.r"))

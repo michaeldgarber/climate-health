@@ -1483,43 +1483,49 @@ border-radius: 0px;
 
 
 <p>By Michael Garber</p>
-<p>Revised September 23, 2025</p>
+<p>Revised October 28, 2025</p>
 <p>URL of this page: <a href="https://michaeldgarber.github.io/climate-health/describe-code-pipeline" class="uri">https://michaeldgarber.github.io/climate-health/describe-code-pipeline</a></p>
 <p>Corresponding GitHub repository: <a href="https://github.com/michaeldgarber/climate-health/tree/main" class="uri">https://github.com/michaeldgarber/climate-health/tree/main</a></p>
 <div id="overview" class="section level1">
 <h1>Overview</h1>
-<p>For an overview of the project, please see here:</p>
-<p><a href="https://michaeldgarber.github.io/climate-health/wf-health-scenarios-doc.html" class="uri">https://michaeldgarber.github.io/climate-health/wf-health-scenarios-doc.html</a></p>
+<p>For an overview of the project, please see the corresponding
+manuscript: [insert-reference-once-published]</p>
 <p>This document describes code that produces the results. The code
 files to conduct the main steps of the analysis are located in the <a href="https://github.com/michaeldgarber/climate-health/tree/main/scripts">scripts</a>
 folder of this repository: <a href="https://github.com/michaeldgarber/climate-health/tree/main" class="uri">https://github.com/michaeldgarber/climate-health/tree/main</a>.</p>
-<p>The three R scripts to run this analysis are the following:</p>
+<p>Five scripts are used to run the analysis:</p>
 <ol style="list-style-type: decimal">
-<li><strong><code>data-mgmt-analyses-before-modeling-RD-as-outcome.R</code></strong>
-This code loads data from various folders, combines the data together,
-and creates some new variables. It also explores the data with plots and
-maps</li>
-<li><strong><code>model-RD-as-outcome.R</code></strong> Fit models for
-effect of intervention variables on the rate difference.</li>
-<li><strong><code>predict-values-alt-tree-ac.R</code></strong> Define
-scenarios and predict alternative values of RD based on scenario values
-and models from Step 2.</li>
+<li><strong><code>read-wf-hosp.R</code></strong> This code reads in data
+on the zip-code-level effects of wildfire on hospitalizations. It also
+reads in some zip-code-level socio-demographic and environmental
+measures, including the green-space effect modifiers.</li>
+<li><strong><code>read-heat-hosp.R</code></strong> Read in data on
+zip-code-level effects of heat (various definitions) on related
+hospitalizations.</li>
+<li><code>model-RD-as-outcome-final.R</code>. Fit models for effects of
+intervention measures (impervious surfaces and tree canopy) on each of
+the spatially varying rate differences.</li>
+<li><strong><code>predict-values-alt.R</code></strong> Define scenarios
+and predict alternative values of the rate differences using the
+models.</li>
+<li><strong><code>predict-values-alt-summary.R</code></strong> Summarize
+the results.</li>
 </ol>
 <p>To quickly run all three scripts in one file, this code may be used:
-<strong>source-scripts-general-eff-mod.R</strong> It “sources” all three
-scripts.</p>
+<strong><code>source-scripts-general-eff-mod.R</code></strong></p>
 </div>
 <div id="what-each-script-does-in-more-detail" class="section level1">
 <h1>What each script does in more detail</h1>
-<div id="import-and-read-data" class="section level2">
-<h2>1. Import and read data</h2>
+<div id="read-and-wrangle-data-on-wildfire-related-effect-estimates-and-covariates" class="section level2">
+<h2>1. Read and wrangle data on wildfire-related effect estimates and
+covariates</h2>
 <p><strong>The script:</strong>
-<code>data-mgmt-analyses-before-modeling-RD-as-outcome.R</code></p>
+<strong><code>read-wf-hosp.R</code></strong></p>
 <p><strong>What it does:</strong> The purpose of this code is to read in
 data on the spatially varying estimates of the effect of wildfire on
 hospitalizations along with covariates and to create a unified dataset
 that will be used for the modeling step at the ZCTA level. Note I use
-zip code interchangeably with ZCTA here.</p>
+zip code and ZCTA interchangeably.</p>
 <p><strong>Data used:</strong> The code begins by reading in information
 from various sources. Specifically, data include:</p>
 <ul>
@@ -1541,7 +1547,7 @@ Index</a> of the Public Health Alliance of Southern California.</p></li>
 <code>biome_name_freq</code>, where the <code>_freq</code> denotes that
 the data are ordered by frequency)</p></li>
 <li><p>Each zip code’s rural-urban commuting code (variable name:
-<code>ruca_cat</code>, which is a 4-category variable with 1-3 being
+<code>ruca_cat3</code>, which is a 3-category variable with 1-3 being
 most urban and the other categories progressively more rural)</p></li>
 <li><p>Each zip code’s proportion of land cover with impervious surface
 (variable name: <code>imperv_prop</code>)</p></li>
@@ -1550,140 +1556,205 @@ most urban and the other categories progressively more rural)</p></li>
 </ul>
 <p><strong>Processing:</strong> It then links all of the information
 together at the zip-code level using <code>dplyr::left_join()</code>,
-joining by the field <code>zcta</code> that each dataset has in
-common.</p>
+joining by the field <code>zcta</code> common to each dataset.</p>
 <p><strong>Quality checks and data exploration:</strong> The code
-subsequently creates maps and plots to assess univariate distributions
-of the variables along with bivariate distributions to assess how
-variables relate to one another. These checks are performed to gain a
-better understanding of the data and to inform modeling.</p>
-<p><strong>Outputs:</strong> The code has two important outputs:</p>
+briefly creates some plots to assess univariate distributions of the
+variables along. These checks are performed to gain a better
+understanding of the data and to inform modeling. Further checks and
+visualizations occur in <code>checks-vis-before-modeling-RD.R</code>,
+described below.</p>
+<p><strong>Outputs:</strong> The code has three important outputs:</p>
 <ul>
-<li><p><strong><code>wf_eff_emm_wide.R</code>:</strong> This is the
-final zip-code-level dataset with the above information linked
-together</p></li>
-<li><p><strong><code>wf_eff_emm_wide_no_outliers.R</code>:</strong> The
-same dataset removing observations containing outliers for the rate
-difference</p></li>
+<li><p><strong><code>outcome_wf</code>:</strong> The zip-code-level
+dataset with the above information linked together</p></li>
+<li><p><strong><code>outcome_wf_no_outliers</code>:</strong> The same
+dataset removing outlier observations (defined here as the 5th and 95th
+percentiles) for the rate difference.</p></li>
+<li><p><code>covars</code>: To conveniently join the covariates with the
+other rate-differences file (next script), the code creates a dataset
+with various covariates at the zip-code level.</p></li>
 </ul>
 </div>
-<div id="model-the-rate-difference-as-the-outcome" class="section level2">
-<h2>2. Model the rate difference as the outcome</h2>
+<div id="read-and-wrangle-data-on-heat-related-effect-estimates" class="section level2">
+<h2>2. Read and wrangle data on heat-related effect estimates</h2>
 <p><strong>The script:</strong>
-<strong><code>model-RD-as-outcome.R</code></strong></p>
-<p><strong>What it does:</strong> The purpose of this code is to model
-the spatially varying rate difference (RD) at the ZCTA level using the
-unified dataset created previously. It fits a series of weighted
-Guassian generalized lienar models to estimate how the RD varies as a
-function of the intervention constructs of interest —either tree canopy
-or air conditioning— along with covariates we expect may confound the
-effect of these intervention variables and the outcome.</p>
-<p><strong>Modeling approach:</strong></p>
-<p><strong>Covariates:</strong> For both tree canopy and air
-conditioning, we tried various models to both control for confounding
-for the association between the RD and the intervention variable of
-interest while keeping the models relatively parsimonious. For each
-model, in addition to include the intervention of interest in the model
-(either tree canopy or air conditioning), we included the following
-covariates:</p>
+<strong><code>read-heat-hosp.R</code></strong></p>
+<p><strong>What it does:</strong> Analogous to the above script on
+wildfire-related effect estimates, this script reads in data on the
+heat-related effect estimates. As there are several definitions of
+extreme heat, as described in the article by <a href="https://www.sciencedirect.com/science/article/pii/S001393512401572X?via%3Dihub">Hansen
+et al. (2025)</a>, the script also explores the various definitions and
+ultimately selects one definition to be used further in the analysis:
+those effects corresponding to two consecutive days of daytime
+temperature above the 99th percentile.</p>
+<p><strong>Data used:</strong> The code uses two main inputs:</p>
 <ul>
-<li><p>proportion insured</p></li>
-<li><p>rural-urban category</p></li>
-<li><p>biome, and</p></li>
-<li><p>two interaction terms</p>
-<ul>
-<li><p>square root of tree canopy times the rural-urban
-category</p></li>
-<li><p>square root of tree canopy times biome.</p></li>
-</ul></li>
+<li><p>Effect estimates relating extreme heat events with
+hospitalizations from <a href="https://www.sciencedirect.com/science/article/pii/S001393512401572X?via%3Dihub">Hansen
+et al. (2025)</a>. Measures provided are the number of attributable
+hospitaliztions under each difference in each ZCTA and a corresponding
+signal-to-noise ratio.</p></li>
+<li><p>Socio-demographic and environmental covariates (object name:
+<code>covars</code> ), created in
+<strong><code>read-wf-hosp.R</code></strong>, above.</p></li>
 </ul>
-<p><strong>Weighting:</strong> Considering the model outcome is itself a
-modeled result (with a point estimate and a standard error), we we used
-weighted regression to weight observations (ZCTAs) with more precise
-estimates more highly. The weight variable is
+<p><strong>Processing:</strong> The script converts the number of
+attributable hospitalizations into a rate difference per
+person-extreme-heat-event, so that the measure is in the same format as
+the wildfire-releted effect estimates. It also calculates a
+corresponding standard deviation for the rate difference using the
+provided signal-to-noise ratios.</p>
+<p>As data are used subsequently in both wide and long format, the code
+also does some wide-to-long conversion
+(<code>dplyr::pivot_longer()</code>) and long-to-wide conversion
+(<code>dplyr::pivot_wider()</code>).</p>
+<p>It appends the covariate data with the effect esimates at the ZCTA
+level using using <code>dplyr::left_join()</code>.</p>
+<p><strong>Quality checks and data exploration:</strong> As with the
+above code, the code includes some plots and checks.</p>
+<p><strong>Outputs:</strong> The code has two important outputs:</p>
+<ul>
+<li><p><strong><code>outcome_heat_hi99_2</code>:</strong> The ZCTA-level
+effect estimates corresponding to the chosen heat definition with the
+covariates joined to it.</p></li>
+<li><p><code>outcome_heat_hi99_2_no_outliers</code>: Same, but without
+outlier observations for the rate difference (defined as below and above
+the 5th and 95th percentiles).</p></li>
+</ul>
+</div>
+<div id="model-the-rate-differences-as-the-outcome" class="section level2">
+<h2>3. Model the rate differences as the outcome</h2>
+<p><strong>The script:</strong>
+<strong><code>model-RD-as-outcome-final.R</code></strong></p>
+<p><strong>What it does:</strong> The purpose of this code is to fit
+models estimating the effect of each intervention measure-proportion
+impervious surfaces and proportion tree canopy-on each spatially varying
+rate difference (RD): those for wildfire and those for heat. It fits
+weighted Guassian generalized linear models to estimate how the RD
+varies as a function of the intervention measures —either tree canopy or
+air conditioning— conditional on the covariates we expect may confound
+their effects on the RD.</p>
+<p><strong><em>Modeling approach:</em></strong></p>
+<p><strong>Covariates:</strong> For each intervention and outcome
+combination, we tried various models to both control for confounding for
+the association between the RD and the intervention variable of interest
+while keeping the models relatively parsimonious to avoid overfitting.
+Ultimately, as we elaborate further in the manuscript, we decided on one
+set of covariates for all models, with tree canopy and impervious
+surface included in the same model. The independent variables for each
+model are:</p>
+<ul>
+<li><p>proportion impervious surfaces</p></li>
+<li><p>tree canopy (with a square-root transformation to make it more
+normal)</p></li>
+<li><p>proportion insured</p></li>
+<li><p>rural-urban category (three levels)</p></li>
+<li><p>biome</p></li>
+</ul>
+<p><strong>Weighting:</strong> Considering the dependent variable in
+each model is itself a modeled result (with a point estimate and a
+standard error), we we used weighted regression to weight observations
+(ZCTAs) with more precise estimates more highly. The weight variable is
 <code>rd_quo_weight</code>. It is defined in the previous code as
 <code>rd_quo_weight= rd_quo_sd_min/rd_quo_sd</code> , where the
 denominator is the standard deviation for the modeled RD in that ZCTA
-and the numerator is the minimum SD over all ZCTAS. This way, the ZCTA
-with. The values with higher SDs will receive lower weights.</p>
+and the numerator is the minimum SD over all ZCTAS. EUsing these
+weights, observations with higher SDs will receive lower weights.</p>
 <p>For reference, the code to fit each final glm model follows:</p>
-<p><strong><em>For tree canopy as the intervention</em>:</strong>
-<code>glm_rd_tree_conf_ins_ruca_biome_int_ruca_biome</code></p>
-<pre class="r"><code>glm_rd_tree_conf_ins_ruca_biome_int_ruca_biome =glm(
-  rd_quo_pt~tree_canopy_prop_sqrt +insured_prop + ruca_cat +
-    biome_name_freq+
-    tree_canopy_prop_sqrt*ruca_cat+
-    tree_canopy_prop_sqrt*biome_name_freq,
+<p><strong><em>Heat-related RDs as the model outcome:</em></strong></p>
+<pre class="r"><code>glm_heat_imp_tree_i_r_b=glm(
+  rd_quo_pt~imperv_prop+tree_canopy_prop_sqrt+insured_prop + 
+    ruca_cat3 
+  + biome_name_freq
+  ,
+  data=outcome_heat_hi99_2_no_outliers,
   family = gaussian,
   na.action = &quot;na.exclude&quot;, 
-  weights = rd_quo_weight,
-  data = wf_eff_emm_wide_no_outliers
+  weights = rd_quo_weight
 )</code></pre>
-<p><strong><em>For air conditioning as the intervention</em>:</strong>
-<code>glm_rd_ac_conf_ins_ruca_biome_int_ruca_biome</code></p>
-<pre class="r"><code>glm_rd_ac_conf_ins_ruca_biome_int_ruca_biome =glm(
-  rd_quo_pt~ac_prop +insured_prop + ruca_cat +
-    biome_name_freq+
-    ac_prop*ruca_cat+
-    ac_prop*biome_name_freq,
+<p><strong><em>Wildfire-related RDs as the model
+outcome:</em></strong></p>
+<pre class="r"><code>glm_wf_imp_tree_i_r_b=glm(
+  rd_quo_pt~imperv_prop+tree_canopy_prop_sqrt+insured_prop + 
+    ruca_cat3 
+   + biome_name_freq
+  ,
+  data=outcome_wf_no_outliers,
   family = gaussian,
   na.action = &quot;na.exclude&quot;, 
-  weights = rd_quo_weight,
-  data = wf_eff_emm_wide_no_outliers
+  weights = rd_quo_weight
 )</code></pre>
-<p><strong>Output:</strong> This script does not save any output to
-disc, as it runs quite quickly. Its outputs (the model objects beginning
-with <code>glm_</code>) are used in the next script.</p>
+<p><strong>Output:</strong> The outputs of this script are the model
+objects:</p>
+<ul>
+<li><p><code>glm_heat_imp_tree_i_r_b</code></p></li>
+<li><p><code>glm_wf_imp_tree_i_r_b</code></p></li>
+</ul>
+<p>They are not saved locally, as this code can be run quickly, and the
+model objects can be quickly created in memory.</p>
 </div>
 <div id="predict-alternative-rate-differences-under-various-scenarios" class="section level2">
-<h2>3. Predict alternative rate differences under various scenarios</h2>
-<p><strong>The script:</strong>
-<code>predict-values-alt-tree-ac.R</code></p>
-<p><strong>Dependencies</strong>: It depends on the modeling script
-being run in the session’s memory, as it uses the model objects. That
-script does not need to be run manually, however. At the top of this
-scripot, that script is run via
-<code>source(here(&quot;scripts&quot;,&quot;model-RD-as-outcome.R&quot;)).</code></p>
-<p><strong>What it does, in summary:</strong> The purpose of the script
-is to predict a range of alternative rate differences for the effect of
-wildfire on acute-care utilization over various scenarios. To define the
-alternative scenarios, for each intervention measure, the script finds
-quintile values (i.e., 20th percentile, 40th percentile,…, 80th
-percentile) over ZCTAs within biome. Percentiles are relative to biome
-to ensure that scenarios are realistic for a given biome. Then, for each
-scenario, in zip codes with a value of the effect modifier below that of
-the scenario’s percentile, the effect modifiers are raised to the level
-of that percentile. And a new rate difference is calculated based on the
-new value for the effect modifier, holding all other variables constant.
-The script then calculates a difference in rate differences between the
-status–quo and alternative scenarios. It also calculates the difference
-in the absolute number of cases. To wash out the influence of modeling,
-the “status-quo” scenario is actually predicted using the model based,
-so it is akin to saying, what would the status-quo RD be if the patterns
+<h2>4. Predict alternative rate differences under various scenarios</h2>
+<p><strong>The script:</strong> <code>predict-values-alt.R</code></p>
+<p><strong>Dependencies</strong>: This script depends on the modeling
+script being run in the session’s memory, as it uses the model objects
+(<code>glm_heat_imp_tree_i_r_b</code> and
+<code>glm_wf_imp_tree_i_r_b</code>). That script is set to run in this
+code using
+<code>source(here(&quot;scripts&quot;,&quot;model-RD-as-outcome-final.R&quot;)).</code></p>
+<p><strong>What the script does:</strong> The purpose of the script is
+to predict a range of alternative rate differences for the separate
+effects of 1) extreme-heat events and 2) wildfire events) on related
+hospitalizations over various scenarios.</p>
+<p>To define the alternative scenarios, for each intervention variable
+(impervious surfaces and tree canopy), we found quintile values (i.e.,
+20th percentile, 40th percentile, …, 80th percentile) over ZCTAs. For
+impervious surfaces, we found quintiles relative to rural-urban category
+on the grounds that it may not be feasible to reduce impervious surfaces
+in a dense urban area to levels typical of a more rural area with
+expanses of undeveloped land. For similar reasons, for tree canopy, we
+found quintiles relative to biome because tree canopy is strongly
+associated with biome, and it may not be realistic, for example, to
+raise tree canopy in the desert up to the 80th percentile of a temperate
+forest. This within-context scenario setting helps ensure that the
+modeled interventions are plausible for their urban and ecological
+context.</p>
+<p>Then, for each scenario, in zip codes with a value of the effect
+modifier below that of the scenario’s percentile, the intervention
+measures are raised to the level of that percentile. And a new rate
+difference is calculated based on the new value for the intervention
+measure, holding all other variables constant. The script then
+calculates a difference in rate differences between the status–quo and
+alternative scenarios. To wash out the influence of modeling, the
+“status-quo” scenario is actually predicted using the model based, so it
+is akin to saying, what would the status-quo RD be if the patterns
 described by the model held true and all variables were at their
-status-quo levels? The script also produces confidence intervals for
-these measures via boostrapping. Finally, the script predicts various
-summary measures summing over all ZCTAs and stratifying summaries over
-rural-urban categories and biome.</p>
-<p><strong>Step-by-step details:</strong></p>
-<p>In progress</p>
-<p><strong>On integrating different effect modifiers:</strong> To
-integrate a new effect modifier, the code could be slightly modified by
-finding and replacing the name of one of the effect modifiers for a new
-effect modifier of interest.</p>
-<p>We considered including an option in the functions to input the name
-of an effect modifier as a function argument. This would reduce the need
-for copy and paste and keep the code more DRY (don’t-repeat-yourself).
-However, it would also make the functions more complex and thus more
-likely to not work. So the functions currently do not have this
-flexibility.</p>
+status-quo levels?</p>
+<p>The script additionally produces confidence intervals for these
+measures via boostrapping. Specifically, we re-sampled the
+model-predicted RD from a normal distribution, where the mean in each
+replicate is the model-predicted value, and the standard deviation is
+the standard deviation of the residuals.</p>
+</div>
+<div id="summarize-results-over-scenarios" class="section level2">
+<h2>5. Summarize results over scenarios</h2>
+<p><strong>The script:</strong>
+<code>predict-values-alt-summary.R</code></p>
+<p><strong>Dependencies</strong>: This script depends on the previous
+script (<code>predict-values-alt.R</code>) having been run in
+memory.</p>
+<p><strong>What it does</strong>: It generates various summaries
+comparing the status-quo with the alternative predicted risk-difference.
+Specifically, it calculates the difference in the rate differences over
+the entire status and across strata of urban-rural and biome. It
+additionally calculates confidence intervals for these measures using
+the bootstrap relicates.</p>
 </div>
 </div>
-<div id="other-code-beyond-the-main-pipeline-data-gathering-r-scripts-r-markdown-shiny" class="section level1">
-<h1>Other code beyond the main pipeline (Data-gathering R scripts, R
-Markdown, Shiny)</h1>
-<div id="scripts-to-gather-data" class="section level2">
-<h2>Scripts to gather data</h2>
+<div id="other-code-beyond-the-main-pipeline" class="section level1">
+<h1>Other code beyond the main pipeline</h1>
+<div id="scripts-to-gather-additional-data" class="section level2">
+<h2>Scripts to gather additional data</h2>
 <p>The above sequence of scripts will work assuming all of the data are
 available locally on the computer in the locations specified by the
 relative paths, as indicated in the statements setting the working
@@ -1700,27 +1771,41 @@ joined with the main effect-estimate data in
 <strong><code>data-mgmt-analyses-before-modeling-RD-as-outcome.R</code></strong><code>.</code></p>
 <ul>
 <li><p><strong><code>get-zcta-california-geo.R</code></strong> This code
-uses tidycensus and other functions to read in publicly available
-geometry data for zip codes in the State of California. It also reads in
-zip-code-level lookup tables for <strong>rural-urban</strong> commuting
-codes.</p></li>
-<li><p><strong><code>link-zctas-biome.R</code></strong> This code links
-Zip codes with biomes.</p></li>
+uses the tidycensus R packag eand other functions to read in publicly
+available geometry data for zip codes in the state of California. It
+also reads in zip-code-level lookup tables for
+<strong>rural-urban</strong> commuting codes.</p></li>
+<li><p><strong><code>link-zctas-biome.R</code></strong> Link zip codes
+with biomes.</p></li>
+<li><p><code>read-ruca-codes.R</code>: Read in rural-urban commuting
+codes and create a few new variables.</p></li>
 <li><p><strong><code>california-air-basins-merge-w-zctas.R</code></strong>
-This code reads in data on air basin and merges with the zip-code
+Read in data on air basin and merges with the zip-code
 geometry.</p></li>
+</ul>
+</div>
+<div id="visualing-and-checking-variables" class="section level2">
+<h2>Visualing and checking variables</h2>
+<ul>
+<li><code>checks-vis-before-modeling-RD.R</code> This script performs
+various descriptive analyses on the measures included in the analysis,
+for example, plots of univariate distributions, scatterplots of how the
+variables are associated with one another, and maps of their spatial
+distributions. This script does need to be run as part of the main
+pipeline.</li>
 </ul>
 </div>
 <div id="rmarkdown-documents-to-create-tables" class="section level2">
 <h2>RMarkdown documents to create tables</h2>
-<p><strong><code>climate-health/docs/wf-health-scenarios-tables.Rmd</code>:</strong>
+<p><strong><code>climate-health/docs/tables-main-text.Rmd</code>:</strong>
 This RMarkdown document creates tables that can be readily pasted into a
-Word document for the manuscript. It relies on results from the main
-pipeline being either saved locally or created in memory during the
-session</p>
+Word document for the manuscript. For it to work, results from the main
+pipeline must be saved locally. Code to locally save is included in
+those corresponding scripts.</p>
 </div>
 <div id="the-shiny-app" class="section level2">
 <h2>The shiny app</h2>
+<p><em>MG 10/28/25: Need to update with latest results</em></p>
 <p><strong>Directory:</strong> The shiny app’s folder is
 <code>climate-health/climate-health-shiny</code></p>
 <p><strong>Data management:</strong> The shiny app expects all of its
