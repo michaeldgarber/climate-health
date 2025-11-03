@@ -203,10 +203,12 @@ These code files explain and gather data from various publicly available sources
 
 ## The shiny app
 
-*MG 10/28/25: Need to update with latest results*
+The shiny app is hosted using my personal Posit account
+
+<https://michaeldgarber.shinyapps.io/app-wf-heat-tree-imp/>
 
 **Directory:** The shiny app's folder is `climate-health/climate-health-shiny`
 
 **Data management:** The shiny app expects all of its input data to be contained within that folder, so there is some additional data management needed to get the shiny app to work. This script (`climate-health-shiny/manage-data-for-app.R`) loads the data created elsewhere in the pipeline and brings it into the shiny app folder. So if the pipeline is altered, this script should be re-run to update the shiny app's data.
 
-**The app's script:** the script to run the shiny app: `app-wf-int.R`
+**The app's script:** the script to run the shiny app: `climate-health-shiny/app-wf-heat-tree-imp.R`

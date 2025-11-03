@@ -1,7 +1,7 @@
 #Continued from
 #Script relies on
-#source(here("scripts","read-wf-hosp.R"))
-#source(here("scripts","read-heat-hosp.R"))
+source(here("scripts","read-wf-hosp.R"))
+source(here("scripts","read-heat-hosp.R"))
 
 #October 15, 2025:
 #Modeling decisions:
@@ -25,7 +25,6 @@ library(jtools) #for summarizing glm outputs with more customization
 # heat as outcome--------
 ## impervious surface as modifier of interest------
 ### scatterplots------
-names(outcome_heat_hi99_2)
 
 outcome_heat_hi99_2_no_outliers %>% 
   # filter(rd_100k_quo_pt<20) %>% 

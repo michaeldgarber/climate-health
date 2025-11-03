@@ -8,4 +8,4 @@ A description of the data pipeline: <https://michaeldgarber.github.io/climate-he
 
 Supplement to working manuscript: <https://michaeldgarber.github.io/climate-health/wf-health-scenarios-supp.html>
 
-Shiny app: <https://michaeldgarber.shinyapps.io/app-wf-int/>
+Shiny app: <https://michaeldgarber.shinyapps.io/app-wf-heat-tree-imp/>

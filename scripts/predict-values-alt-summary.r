@@ -1,7 +1,8 @@
 #Summarizing the predicted alternatives
 #Leaving in one code was making it too long
 
-#point estimates
+library(here)
+#source(here("scripts","predict-values-alt.R"))
 scenarios_all_pt
 
 #boot reps
@@ -116,6 +117,7 @@ mutate_rd_diff_boot=function(df){
 
 # Point estimates--------
 ## overall-------
+scenarios_all_pt
 ## by outcome, intervention, and target percentile
 scenarios_summary_overall=scenarios_all_pt %>% 
   filter(zcta_intervene==1) %>% 
@@ -166,11 +168,40 @@ scenarios_summary_zcta=scenarios_all_pt %>%
   summarise_ungroup_n_cases_diff_rd_pop() %>% 
   mutate_rd_diff() 
 
-scenarios_summary_zcta %>% View()
+#scenarios_summary_zcta %>% View()
 
 #need one for a map as well
-#see previous version of this code
+#Keep everything and add biome and RUCA for information
+zcta_ruca2010
+names(scenarios_summary_zcta)
+lookup_scenario_intervene_var_value_outcome_zcta
+nrow(lookup_scenario_intervene_var_value_outcome_zcta)
+nrow(scenarios_summary_zcta)
+scenarios_summary_zcta_for_map=scenarios_summary_zcta %>% 
+  left_join(lookup_zcta_ca_biome, by ="zcta") %>% 
+  left_join(zcta_ruca2010,by="zcta") %>% 
+  #I also need some information on the actual and target values
+  #by zip code, which I have here
+  left_join(lookup_scenario_intervene_var_value_outcome_zcta,by=
+              c("zcta","intervene_var", "outcome",
+                "target_percentile_unified")) %>% 
+  #and then limit to these. Basically just omit a few
+  #What this doesn't have the old one had is information
+  #on the actual value for intervention measure
+  dplyr::select(
+    -contains("n_zcta"),
+    -contains("_act_")
+  )
+  
 
+scenarios_summary_zcta_for_map %>% View()
+#see previous version of this code for the variables
+#That included in the summary _for_map
+
+#save
+setwd(here("data-processed"))
+save(scenarios_summary_zcta_for_map,
+     file="scenarios_summary_zcta_for_map.RData")
 
 
 # Confidence intervals------
@@ -346,3 +377,5 @@ scenarios_summary_biome_name_freq_pt_ci %>%
                 contains("rd_100k_diff"))
 
 names(scenarios_summary_biome_name_freq_pt_ci)
+
+### by zcta------

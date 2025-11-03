@@ -893,13 +893,42 @@ scenarios_all_pt=heat_imperv_scenarios_all_pt %>%
     )
   ) %>% 
   dplyr::select(zcta,outcome,intervene_var,zcta_intervene,
-                contains("target_percentile"),everything())
+                contains("target_percentile"),
+                contains("imperv_"),
+                contains("tree_canopy"),
+                everything()) %>% 
+  #I believe imperv_prop and imperv_prop_original are the same.
+  #Is that true? If so, I can omit the latter. #Same for
+  #tree canopy variable
+  dplyr::select(-contains("original"))
 
 names(scenarios_all_pt)
+# scenarios_all_pt %>% 
+#   dplyr::select(zcta,outcome,intervene_var,contains("target_percentile")) %>% 
+#   View()
 scenarios_all_pt %>% 
-  dplyr::select(zcta,outcome,intervene_var,contains("target_percentile")) %>% 
+  dplyr::select(zcta,contains("imperv")) %>% 
   View()
 
+#same for tree?
+scenarios_all_pt %>% 
+  dplyr::select(zcta,contains("tree")) %>% 
+  View()
+
+#for the mapped version, we could use
+#a look-up table between the actual and alternate values
+#for the intervention measures at the zip-code level
+lookup_scenario_intervene_var_value_outcome_zcta=scenarios_all_pt %>% 
+  filter(zcta_intervene==1) %>% 
+  dplyr::select(zcta,intervene_var,outcome, target_percentile_unified,
+                imperv_prop,
+                imperv_prop_alt,
+                tree_canopy_prop,
+                tree_canopy_prop_sqrt,
+                tree_canopy_prop_sqrt_alt
+                )
+
+lookup_scenario_intervene_var_value_outcome_zcta
 
 # Boostrap confidence intervals----------
 

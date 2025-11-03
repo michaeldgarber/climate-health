@@ -9,6 +9,9 @@
 #Note that here is relative to the project
 #April 22, 2025: update to omit the race variables. Just use the SES
 #May 26, 2025: lighten this up. See old versions as needed
+#November 3, 2025: revise to include different data per change in direction
+#of project
+
 #variables
 library(here)
 library(tidyverse)
@@ -16,17 +19,17 @@ setwd(here("data-processed"))
 
 load("zcta_ca_geo_simplified.RData")
 
+#for another shiny idea
 load("scenario_compare_full_join_poverty_ac.RData")
 
 
-
+scenarios_summary_overall_pt_ci
 #May 26, 2025 updated data for tree & ac analysis
 #where we control for confounding
 setwd(here("data-processed"))
-load("tree_ac_summary_overall_pt_ci.RData")
-load("tree_ac_summary_by_zcta_for_map.RData")
-
-
+load("scenarios_summary_overall_pt_ci.RData")
+load("scenarios_summary_zcta_for_map.RData")
+scenarios_summary_zcta_for_map
 
 
 ## save data------
@@ -41,10 +44,10 @@ save(scenario_compare_full_join_poverty_ac,
 
 #May 26, 2025 update
 setwd(here("climate-health-shiny","data"))
-save(tree_ac_summary_overall_pt_ci,
-     file="tree_ac_summary_overall_pt_ci.RData")
-save(tree_ac_summary_by_zcta_for_map,
-     file="tree_ac_summary_by_zcta_for_map.RData")
+save(scenarios_summary_overall_pt_ci,
+     file="scenarios_summary_overall_pt_ci.RData")
+save(scenarios_summary_zcta_for_map,
+     file="scenarios_summary_zcta_for_map.RData")
 
 # For Maren's app-----
 # April 11, 2025

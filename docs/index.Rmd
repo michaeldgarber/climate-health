@@ -8,21 +8,18 @@ output:
 ---
 
 
-# Simulating how tree canopy and air conditioning may modify effects of wildfire on healthcare utilization
+# Simulating how intervening on impervious surfaces and tree canopy may modify effects of wildfire and heat on healthcare utilization
+
 A description of the code pipeline: https://michaeldgarber.github.io/climate-health/describe-code-pipeline
 
-Preliminary report:
-https://michaeldgarber.github.io/climate-health/wf-health-scenarios-doc.html
-
-Supplement to working manuscript:
+Supplement to working manuscript (update in progress):
 https://michaeldgarber.github.io/climate-health/wf-health-scenarios-supp.html
 
-Shiny app:
-https://michaeldgarber.shinyapps.io/app-wf-int/
+Shiny app: https://michaeldgarber.shinyapps.io/app-wf-heat-tree-imp/
 
 
 
-# Estimating benefits of greening on heat-related hospitalizations
+# Estimating benefits of greening on heat-related hospitalizations using various approaches to defining scenarios
 
 https://michaeldgarber.github.io/heat-hosp-california/vis-check-plots.html
 
@@ -32,5 +29,5 @@ https://michaeldgarber.github.io/climate-health/heat-hosp-green-hia/vis-static-m
 https://michaeldgarber.github.io/climate-health/heat-hosp-green-hia/vis-interactive-maps.html
 
 
-Shiny app: TBD
+Shiny app: https://michaeldgarber.shinyapps.io/heat-hosp-green-hia-interactive/
 
