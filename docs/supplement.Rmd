@@ -14,3 +14,5 @@ output:
 
 December 2025 
 Placeholder URL. Will update to reflect revised m/s
+Note to self: adapt from
+climate-health/docs/wf-health-scenarios-supp.Rmd
