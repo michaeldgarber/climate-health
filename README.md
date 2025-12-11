@@ -6,6 +6,6 @@ Please see the following pages for further information:
 
 A description of the data pipeline: <https://michaeldgarber.github.io/climate-health/describe-code-pipeline>
 
-Supplement to working manuscript: <https://michaeldgarber.github.io/climate-health/wf-health-scenarios-supp.html>
+Supplement to working manuscript: <https://michaeldgarber.github.io/climate-health/supplement.html>
 
 Shiny app: <https://michaeldgarber.shinyapps.io/app-wf-heat-tree-imp/>
