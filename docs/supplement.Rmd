@@ -319,6 +319,7 @@ outcome_wf_no_outliers %>%
 ```
 
 ## Between RDs and other covariates
+
 Heat RD vs proportion insured
 
 ```{r}
@@ -338,6 +339,7 @@ outcome_heat_hi99_2_no_outliers %>%
 
 
 Heat RD vs rural-urban category
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -355,6 +357,7 @@ outcome_heat_hi99_2_no_outliers %>%
 
 
 Heat RD vs biome
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -376,6 +379,7 @@ outcome_heat_hi99_2_no_outliers %>%
 
 
 Wildfire RD vs proportion insured
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -395,6 +399,7 @@ outcome_wf_no_outliers %>%
 
 
 Wildfire RD vs rural-urban category
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -411,6 +416,7 @@ outcome_wf_no_outliers %>%
 ```
 
 Wildfire RD vs biome
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -433,7 +439,9 @@ outcome_wf_no_outliers %>%
 
 
 ## Between Intervention measures and other covariates
+
 Impervious surfaces vs Proportion insured
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -451,6 +459,7 @@ outcome_heat_hi99_2_no_outliers %>%
 
 
 Impervious surfaces vs RUCA
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -467,6 +476,7 @@ outcome_heat_hi99_2_no_outliers %>%
 ```
 
 Impervious surfaces vs biome
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -482,7 +492,9 @@ outcome_heat_hi99_2_no_outliers %>%
    scale_x_discrete(labels = scales::label_wrap(10))
 ```
 
+
 Tree canopy vs Proportion insured
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -500,6 +512,7 @@ outcome_heat_hi99_2_no_outliers %>%
 
 
 Tree canopy vs RUCA
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -516,6 +529,7 @@ outcome_heat_hi99_2_no_outliers %>%
 ```
 
 Tree canopy vs biome
+
 ```{r}
 #| echo: false
 #| warning: false
