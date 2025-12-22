@@ -12,8 +12,7 @@ output:
 
 A description of the code pipeline: https://michaeldgarber.github.io/climate-health/describe-code-pipeline
 
-Supplement to working manuscript (update in progress):
-https://michaeldgarber.github.io/climate-health/wf-health-scenarios-supp.html
+Supplement to working manuscript: https://michaeldgarber.github.io/climate-health/supplement.html
 
 Shiny app: https://michaeldgarber.shinyapps.io/app-wf-heat-tree-imp/
 
