@@ -11,8 +11,527 @@ output:
     number_sections: TRUE
 ---
 
+This page is a supplement to the manuscript, entitled
 
-December 2025 
-Placeholder URL. Will update to reflect revised m/s
-Note to self: adapt from
-climate-health/docs/wf-health-scenarios-supp.Rmd
+**A two-stage g-computation framework for health-impact assessment using spatially varying effects**
+
+It contains univariate and bivariate distributions of measures used in the analysis.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+#Notes:
+#This document is adapted from
+#climate-health/docs/wf-health-scenarios-supp.Rmd
+
+library(here)
+library(mapview)  
+library(tmap)
+library(leafgl)
+library(tidyverse)
+library(viridis)
+library(viridisLite)
+library(leaflet)
+library(leaflet.extras)
+library(tmap)
+library(knitr)
+library(RColorBrewer)
+library(kableExtra)
+library(knitr)
+```
+
+
+# Univariate distributions
+
+## Rate-difference outcomes
+These RDs represent the estimated number of hospitalizations attributable to each climate-related exposure per 100,000 population per event.
+A positive rate difference indicates that the climate hazard (heat or wildfire) is causing hospitalizations, and a negative value implies the hazard prevents them.
+Heat events are defined as two consecutive days, so estimates represent the per-heat-event burden rather than a per-day measures. 
+
+### Heat-related hospitalizations
+
+Histogram of Rate difference per 100,000 person-events over ZCTAs.
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+options(scipen=999)
+setwd(here("data-processed"))
+load("outcome_heat_hi99_2_no_outliers.RData")
+
+outcome_heat_hi99_2_no_outliers %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
+  summarise(
+    Median=median(rd_100k_quo_pt,na.rm=T),
+    Mean=weighted.mean(
+        x=rd_100k_quo_pt,
+        w=pop
+        ),
+    Percentile_25th= quantile(rd_100k_quo_pt,probs=c(0.25),na.rm=T),
+    Percentile_75th= quantile(rd_100k_quo_pt,probs=c(0.75),na.rm=T)
+  ) %>% 
+  ungroup() %>% 
+  dplyr::select(-overall) %>% 
+  knitr::kable(digits=3)
+
+
+outcome_heat_hi99_2_no_outliers %>% 
+  ggplot(aes(x=rd_100k_quo_pt))+
+  geom_histogram()+
+  theme_bw()+
+  labs(
+    x="Rate difference per 100,000 person-events",
+    y="Number of ZCTAs")
+
+```
+
+
+
+### Wildfire-related hospitalizations
+Histogram of Rate difference per 100,000 person-events over ZCTAs.
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+options(scipen=999)
+setwd(here("data-processed"))
+load("outcome_wf_no_outliers.RData")
+
+outcome_wf_no_outliers %>% 
+  mutate(overall=1) %>% 
+  group_by(overall) %>% 
+  summarise(
+    Median=median(rd_100k_quo_pt,na.rm=T),
+    Mean=weighted.mean(
+        x=rd_100k_quo_pt,
+        w=pop
+        ),
+    Percentile_25th= quantile(rd_100k_quo_pt,probs=c(0.25),na.rm=T),
+    Percentile_75th= quantile(rd_100k_quo_pt,probs=c(0.75),na.rm=T)
+  ) %>% 
+  ungroup() %>% 
+  dplyr::select(-overall) %>% 
+  knitr::kable(digits=3)
+
+
+outcome_wf_no_outliers %>% 
+  ggplot(aes(x=rd_100k_quo_pt))+
+  geom_histogram()+
+  theme_bw()+
+  labs(
+    x="Rate difference per 100,000 person-events",
+    y="Number of ZCTAs")
+
+```
+
+
+## Intervention measures
+The intervention measures are:
+* Impervious surfaces
+* Tree canopy
+
+Below are histograms of these measures over ZCTAs.
+
+### Impervious surfaces
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+outcome_wf_no_outliers %>% 
+  ggplot(aes(x=imperv_prop))+
+  geom_histogram()+
+  theme_bw()+
+  labs(
+    x="Proportion Impervious Surfaces",
+    y="Number of ZCTAs")
+```
+
+### Tree canopy
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+#names(outcome_wf_no_outliers)
+outcome_wf_no_outliers %>% 
+  ggplot(aes(x=tree_canopy_prop))+
+  geom_histogram()+
+  theme_bw()+
+  labs(
+    x="Proportion Tree Canopy",
+    y="Number of ZCTAs")
+```
+
+
+
+
+## Covariates
+
+### Proportion with health insurance
+Distribution over ZCTAs
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| 
+#names(outcome_wf_no_outliers)
+outcome_wf_no_outliers %>% 
+  ggplot(aes(x=insured_prop))+
+  geom_histogram()+
+  theme_bw()+
+  labs(
+    x="Proportion with Insurance",
+    y="Number of ZCTAs")
+```
+
+### Rural-urban classification
+
+Definitions of rural-urban commuting codes:
+
+1.  Metropolitan area core: primary flow within an urbanized area (UA)
+2.  Metropolitan area high commuting: primary flow 30% or more to a UA
+3.  Metropolitan area low commuting: primary flow 10% to 30% to a UA
+4.  Micropolitan area core: primary flow within an Urban Cluster of 10,000 to 49,999 (large UC)
+5.  Micropolitan high commuting: primary flow 30% or more to a large UC
+6.  Micropolitan low commuting: primary flow 10% to 30% to a large UC
+7.  Small town core: primary flow within an Urban Cluster of 2,500 to 9,999 (small UC)
+8.  Small town high commuting: primary flow 30% or more to a small UC
+9.  Small town low commuting: primary flow 10% to 30% to a small UC
+10. Rural areas: primary flow to a tract outside a UA or UC
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+setwd(here("data-processed"))
+load("zcta_ca_geo_simplified.RData")
+load("zcta_ruca2010.RData")
+zcta_ca_geo_simplified %>% 
+  left_join(zcta_ruca2010,by="zcta") %>% 
+  qtm(
+    basemaps = "CartoDB.Positron",
+    lwd=.5,
+    fill = "ruca_cat3",
+#    title = "RUCA",
+    fill.legend= tm_legend("RUCA category")
+)
+```
+
+
+### Biome
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+library(tmap)
+setwd(here("data-input","biome-california"))
+load("biomes_14_california.RData") 
+biomes_14_california %>% 
+  rename(biome_name=BIOME_NAME) %>% 
+    qtm(
+    basemaps = "CartoDB.Positron",
+    lwd=.5,
+    fill = "biome_name",
+    fill.legend= tm_legend("Biome")
+  )
+
+```
+
+
+
+# Bivariate Associations
+In scatterplots, points are ZCTAs.
+
+## Between RDs and intervention measures
+Heat RD vs impervious surfaces
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+outcome_heat_hi99_2_no_outliers %>%
+  ggplot(aes(y=rd_100k_quo_pt,x=imperv_prop))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion impervious surface",
+    y="Rate difference per 100,000 person-events")
+
+```
+
+Heat RD vs tree canopy
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+outcome_heat_hi99_2_no_outliers %>%
+  ggplot(aes(y=rd_100k_quo_pt,x=tree_canopy_prop))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion tree canopy",
+    y="Rate difference per 100,000 person-events")
+```
+
+
+Wildfire RD vs impervious surfaces
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+outcome_wf_no_outliers %>%
+  ggplot(aes(y=rd_100k_quo_pt,x=imperv_prop))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion impervious surface",
+    y="Rate difference per 100,000 person-events")
+
+```
+
+
+Wildfire RD vs tree canopy
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+outcome_wf_no_outliers %>%
+  ggplot(aes(y=rd_100k_quo_pt,x=tree_canopy_prop))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion impervious surface",
+    y="Rate difference per 100,000 person-events")
+```
+
+## Between RDs and other covariates
+Heat RD vs proportion insured
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+outcome_heat_hi99_2_no_outliers %>%
+  ggplot(aes(y=rd_100k_quo_pt,x=insured_prop))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion insured",
+    y="Rate difference per 100,000 person-events")
+```
+
+
+Heat RD vs rural-urban category
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+outcome_heat_hi99_2_no_outliers %>% 
+  ggplot(aes(x=ruca_cat4, y=rd_100k_quo_pt))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Rural-urban category"
+  )+
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+
+Heat RD vs biome
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+outcome_heat_hi99_2_no_outliers %>% 
+  ggplot(aes(x=biome_name_freq, y=rd_100k_quo_pt))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Biome"
+  )+
+  #see
+#  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+
+
+
+Wildfire RD vs proportion insured
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+outcome_wf_no_outliers %>%
+  ggplot(aes(y=rd_100k_quo_pt,x=insured_prop))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion insured",
+    y="Rate difference per 100,000 person-events")
+
+```
+
+
+
+Wildfire RD vs rural-urban category
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+outcome_wf_no_outliers %>% 
+  ggplot(aes(x=ruca_cat4, y=rd_100k_quo_pt))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Rural-urban category"
+  )+
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+Wildfire RD vs biome
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+outcome_wf_no_outliers %>% 
+  ggplot(aes(x=biome_name_freq, y=rd_100k_quo_pt))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Rate difference per 100,000 person-days",
+    x="Biome"
+  )+
+  #see
+#  https://stackoverflow.com/questions/21878974/wrap-long-axis-labels-via-labeller-label-wrap-in-ggplot2
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+
+
+
+
+## Between Intervention measures and other covariates
+Impervious surfaces vs Proportion insured
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+outcome_heat_hi99_2_no_outliers %>%
+  ggplot(aes(y=imperv_prop,x=insured_prop))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion insured",
+    y="Proportion impervious surfaces")
+```
+
+
+Impervious surfaces vs RUCA
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+outcome_heat_hi99_2_no_outliers %>% 
+  ggplot(aes(x=ruca_cat4, y=imperv_prop))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Proportion impervious surfaces",
+    x="Rural-urban category"
+  )+
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+Impervious surfaces vs biome
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+outcome_heat_hi99_2_no_outliers %>% 
+  ggplot(aes(x=biome_name_freq, y=imperv_prop))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Proportion impervious surfaces",
+    x="Biome"
+  )+
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+Tree canopy vs Proportion insured
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+outcome_heat_hi99_2_no_outliers %>%
+  ggplot(aes(y=tree_canopy_prop,x=insured_prop))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(
+    x="Proportion insured",
+    y="Proportion Tree canopy")
+```
+
+
+Tree canopy vs RUCA
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+outcome_heat_hi99_2_no_outliers %>% 
+  ggplot(aes(x=ruca_cat4, y=tree_canopy_prop))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Proportion Tree canopy",
+    x="Rural-urban category"
+  )+
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+Tree canopy vs biome
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+outcome_heat_hi99_2_no_outliers %>% 
+  ggplot(aes(x=biome_name_freq, y=tree_canopy_prop))+
+  geom_boxplot()+
+  theme_bw()+
+  labs(
+    y="Proportion Tree canopy",
+    x="Biome"
+  )+
+   scale_x_discrete(labels = scales::label_wrap(10))
+```
+
+
+
+
+
